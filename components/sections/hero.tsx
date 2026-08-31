@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowRight } from "lucide-react";
 
+import { HeroSignalKicker } from "@/components/visual/hero-signal-kicker";
 import { NetworkCorridor } from "@/components/visual/network-corridor";
 import { LunarSignature } from "@/components/visual/lunar-signature";
 import { site, whatsappLink } from "@/lib/site";
@@ -62,15 +63,7 @@ export function Hero() {
         </div>
 
         <div className="hero-content relative flex flex-1 flex-col items-start py-4 lg:order-1 lg:py-20">
-          <p className="hero-eyebrow-long eyebrow">
-            <span className="node-dot" aria-hidden />
-            Infraestructura propia · Norte argentino
-          </p>
-
-          <p className="hero-eyebrow-short eyebrow">
-            <span className="node-dot" aria-hidden />
-            Red propia · Norte argentino
-          </p>
+          <HeroSignalKicker />
 
           <h1 className="hero-title display mt-4 text-[clamp(2.15rem,8.6vw,4.6rem)] lg:mt-5 lg:text-[clamp(3.2rem,4.6vw,4.9rem)]">
             Internet estable

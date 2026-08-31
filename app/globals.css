@@ -161,7 +161,6 @@ body {
   min-height: 32rem;
 }
 
-.hero-eyebrow-short,
 .hero-copy-short {
   display: none;
 }
@@ -227,6 +226,140 @@ body {
     background: rgb(var(--cyan));
     box-shadow: 0 0 0 3px rgb(var(--cyan) / 0.18), 0 0 12px rgb(var(--cyan) / 0.7);
     flex: none;
+  }
+
+  /*
+   * El kicker del hero convierte el antiguo rótulo estático en una miniatura
+   * funcional de la promesa de Killa: una localidad entra a la red propia y
+   * la señal llega al norte. La celda de localidades tiene ancho fijo y todos
+   * sus textos comparten la misma área de grid; así nunca produce layout shift.
+   */
+  .hero-signal-kicker {
+    width: min(100%, 22.5rem);
+    min-height: 3.7rem;
+    padding: 0.52rem 0.72rem 0.58rem;
+    overflow: hidden;
+    border: 1px solid rgb(var(--line));
+    border-left: 2px solid rgb(var(--cyan));
+    border-radius: 0.75rem;
+    background: rgb(var(--midnight) / 0.78);
+    box-shadow: inset 0 1px 0 rgb(var(--cyan) / 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .hero-signal-kicker__meta,
+  .hero-signal-kicker__flow {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+  }
+
+  .hero-signal-kicker__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.48rem;
+    color: rgb(var(--cyan));
+    font-size: 0.625rem;
+    line-height: 1;
+    letter-spacing: 0.16em;
+  }
+
+  .hero-signal-kicker__meta .node-dot {
+    width: 5px;
+    height: 5px;
+  }
+
+  .hero-signal-kicker__ticks {
+    display: flex;
+    gap: 0.22rem;
+    margin-left: auto;
+  }
+
+  .hero-signal-kicker__ticks i {
+    width: 0.28rem;
+    height: 0.28rem;
+    border-radius: 999px;
+    background: rgb(var(--line-strong));
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .hero-signal-kicker__ticks i.is-active {
+    background: rgb(var(--cyan));
+    box-shadow: 0 0 8px rgb(var(--cyan) / 0.75);
+  }
+
+  .hero-signal-kicker__flow {
+    display: grid;
+    grid-template-columns: 5.7rem minmax(1.5rem, 1fr) 0.4rem auto;
+    align-items: center;
+    gap: 0.42rem;
+    margin-top: 0.48rem;
+    font-size: 0.62rem;
+    line-height: 1;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  .hero-signal-kicker__localities {
+    display: grid;
+    color: rgb(var(--fg-muted));
+  }
+
+  .hero-signal-kicker__localities > span {
+    grid-area: 1 / 1;
+    opacity: 0;
+    transform: translateY(0.35rem);
+    transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .hero-signal-kicker__localities > span.is-active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .hero-signal-kicker__rail {
+    position: relative;
+    height: 1px;
+    overflow: hidden;
+    background: rgb(var(--line-strong));
+  }
+
+  @keyframes hero-kicker-pulse {
+    from { background-position: -2.2rem 0; }
+    to { background-position: calc(100% + 2.2rem) 0; }
+  }
+
+  .hero-signal-kicker__pulse {
+    position: absolute;
+    inset: -2px 0;
+    background-image: linear-gradient(90deg, transparent, rgb(var(--cyan-bright)), transparent);
+    background-repeat: no-repeat;
+    background-size: 2.2rem 100%;
+    animation: hero-kicker-pulse 2.8s cubic-bezier(0.33, 0, 0.2, 1) both;
+  }
+
+  @keyframes hero-kicker-tip {
+    0%, 63% { opacity: 0.35; transform: rotate(45deg) scale(1); }
+    78% { opacity: 1; transform: rotate(45deg) scale(1.55); }
+    100% { opacity: 0.75; transform: rotate(45deg) scale(1); }
+  }
+
+  .hero-signal-kicker__tip {
+    width: 0.35rem;
+    height: 0.35rem;
+    border-right: 1px solid rgb(var(--cyan));
+    border-top: 1px solid rgb(var(--cyan));
+    animation: hero-kicker-tip 2.8s cubic-bezier(0.33, 0, 0.2, 1) both;
+  }
+
+  @keyframes hero-kicker-arrive {
+    0%, 70% { color: rgb(var(--fg-faint)); text-shadow: none; }
+    82%, 100% { color: rgb(var(--cyan)); text-shadow: 0 0 12px rgb(var(--cyan) / 0.35); }
+  }
+
+  .hero-signal-kicker__result {
+    font-weight: 500;
+    animation: hero-kicker-arrive 2.8s cubic-bezier(0.33, 0, 0.2, 1) both;
   }
 
   /* ---------- superficies ---------- */
@@ -745,9 +878,13 @@ body {
     top: 5.1rem;
   }
   .hero-content { padding-block: 0.8rem; }
-  .hero-eyebrow-long,
   .hero-copy-long { display: none; }
-  .hero-eyebrow-short { display: inline-flex; }
+  .hero-signal-kicker {
+    min-height: 2.15rem;
+    padding-block: 0.48rem;
+  }
+  .hero-signal-kicker__meta { display: none; }
+  .hero-signal-kicker__flow { margin-top: 0; }
   .hero-title {
     margin-top: 0.65rem;
     font-size: clamp(2rem, 8.3vw, 2.15rem);
