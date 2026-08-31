@@ -19,6 +19,30 @@ export const metadata: Metadata = {
   title: "Killa TV",
   description:
     "Noticias y actualidad regional. El portal editorial de Killa TV para las comunidades del norte argentino.",
+  alternates: { canonical: "/tv" },
+  openGraph: {
+    type: "website",
+    locale: "es_AR",
+    url: "/tv",
+    title: "Killa TV — La señal del norte",
+    description:
+      "Noticias, deporte, turismo y actualidad de las comunidades del norte argentino.",
+    images: [
+      {
+        url: "/og-tv.png",
+        width: 1536,
+        height: 1024,
+        alt: "Killa TV — La señal del norte",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Killa TV — La señal del norte",
+    description:
+      "Noticias, deporte, turismo y actualidad de las comunidades del norte argentino.",
+    images: ["/og-tv.png"],
+  },
 };
 
 const youtubeLive = "https://www.youtube.com/@killatvok/streams";

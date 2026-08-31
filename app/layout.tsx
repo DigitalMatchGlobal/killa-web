@@ -33,8 +33,23 @@ const title = "Killa Comunicaciones — Internet, tecnología y medios en el nor
 const description =
   "Trece años conectando el norte argentino. Internet para hogares, soluciones de telecomunicaciones, producción audiovisual y Killa TV.";
 
+/**
+ * En Vercel las URLs de Open Graph deben apuntar al deployment que realmente
+ * sirve la imagen. Al pasar a killa.com.ar, NEXT_PUBLIC_SITE_URL permite fijar
+ * el dominio definitivo sin volver a tocar el código.
+ */
+const deploymentUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  process.env.VERCEL_PROJECT_PRODUCTION_URL ??
+  process.env.VERCEL_URL;
+const metadataOrigin = deploymentUrl
+  ? deploymentUrl.startsWith("http")
+    ? deploymentUrl
+    : `https://${deploymentUrl}`
+  : site.url;
+
 export const metadata: Metadata = {
-  metadataBase: new URL(site.url),
+  metadataBase: new URL(metadataOrigin),
   title: { default: title, template: "%s · Killa" },
   description,
   applicationName: site.legalName,
@@ -51,7 +66,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "es_AR",
-    url: site.url,
+    url: "/",
     siteName: site.legalName,
     title,
     description,
