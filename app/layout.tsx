@@ -77,11 +77,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F4F8FC" },
-    { media: "(prefers-color-scheme: dark)", color: "#040A16" },
-  ],
-  colorScheme: "dark light",
+  themeColor: "#F4F8FC",
+  colorScheme: "light dark",
 };
 
 const themeScript = `
@@ -90,11 +87,12 @@ const themeScript = `
       var saved = localStorage.getItem('killa-color-theme');
       var theme = saved === 'light' || saved === 'dark'
         ? saved
-        : (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        : 'light';
       document.documentElement.dataset.theme = theme;
       document.documentElement.style.colorScheme = theme;
     } catch (_) {
-      document.documentElement.dataset.theme = 'dark';
+      document.documentElement.dataset.theme = 'light';
+      document.documentElement.style.colorScheme = 'light';
     }
   })();
 `;

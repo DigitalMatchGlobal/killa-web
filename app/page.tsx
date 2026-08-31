@@ -5,7 +5,6 @@ import { Commitment } from "@/components/sections/commitment";
 import { Contact } from "@/components/sections/contact";
 import { Coverage } from "@/components/sections/coverage";
 import { Ecosystem } from "@/components/sections/ecosystem";
-import { FutureRoadmap } from "@/components/sections/future-roadmap";
 import { Hero } from "@/components/sections/hero";
 import { KillaTV } from "@/components/sections/killa-tv";
 import { Marquee } from "@/components/sections/marquee";
@@ -29,7 +28,6 @@ export default function Home() {
         <Coverage />
         <Marquee />
         <KillaTV />
-        <FutureRoadmap />
         <Commitment />
       </main>
       <Contact />
