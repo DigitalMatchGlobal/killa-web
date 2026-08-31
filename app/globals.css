@@ -1,0 +1,790 @@
+@import "tailwindcss";
+
+/*
+ * Sistema de diseño Killa
+ * ------------------------------------------------------------------
+ * Los tokens de color van en CANALES RGB, no en hex, para poder escribir
+ * `rgb(var(--cyan) / 0.3)` a mano en el CSS de los componentes de acá abajo.
+ *
+ * ⚠ En @theme se registran ya envueltos: `--color-cyan: rgb(var(--cyan))`.
+ * NO usar `rgb(var(--cyan))`: esa es sintaxis de Tailwind v3
+ * y en v4 queda como valor inválido, con lo cual `text-cyan` y `border-line`
+ * caen a `currentColor` y el sitio pierde todos los colores sin dar un solo
+ * error. En v4 la opacidad (`bg-cyan/12`) la resuelve Tailwind con color-mix().
+ *
+ * Paleta: el logotipo de Killa es blanco sobre transparente y el
+ * isotipo va de cian a gris. Eso obliga a fondo oscuro. El cian
+ * #00BCE8 es el color de marca tal cual está hoy en killa.com.ar.
+ * El arena es un acento territorial (los Valles) y se usa en dosis
+ * mínimas: la luz de luna del hero y Killa TV. "Killa" es luna en
+ * quechua; el resplandor cálido del hero es eso, no un degradado.
+ */
+:root {
+  /* superficies */
+  --midnight: 4 10 22;
+  --night: 8 17 34;
+  --surface: 13 26 48;
+  --surface-2: 19 36 63;
+
+  /* marca */
+  --cyan: 0 188 232;
+  --cyan-bright: 90 226 255;
+  --cyan-deep: 0 122 160;
+  --sand: 233 208 160;
+  --moon-light: 250 242 214;
+  --moon-mid: 233 208 160;
+  --moon-shadow: 10 18 32;
+
+  /* texto */
+  --fg: 232 240 250;
+  --fg-muted: 148 166 190;
+  --fg-faint: 104 122 146;
+
+  /* líneas */
+  --line: 32 52 82;
+  --line-strong: 48 78 118;
+
+  --font-display: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-brand), ui-monospace, SFMono-Regular, monospace;
+
+  --section-py: clamp(4.5rem, 11vw, 8.5rem);
+  --shell: 1200px;
+}
+
+/*
+ * Tema claro: no es una inversión automática. Las superficies conservan una
+ * dominante azul fría para que el cian, el mapa y el lenguaje de red sigan
+ * sintiéndose Killa.
+ */
+:root[data-theme="light"] {
+  --midnight: 244 248 252;
+  --night: 236 243 249;
+  --surface: 255 255 255;
+  --surface-2: 222 233 243;
+
+  --cyan: 0 151 197;
+  --cyan-bright: 0 112 156;
+  --cyan-deep: 0 102 145;
+  --sand: 151 116 54;
+  --moon-light: 255 247 216;
+  --moon-mid: 226 198 142;
+  --moon-shadow: 18 27 42;
+
+  --fg: 8 25 44;
+  --fg-muted: 65 87 111;
+  --fg-faint: 100 122 144;
+
+  --line: 202 217 230;
+  --line-strong: 151 177 200;
+}
+
+@theme inline {
+  --color-midnight: rgb(var(--midnight));
+  --color-night: rgb(var(--night));
+  --color-surface: rgb(var(--surface));
+  --color-surface-2: rgb(var(--surface-2));
+  --color-cyan: rgb(var(--cyan));
+  --color-cyan-bright: rgb(var(--cyan-bright));
+  --color-cyan-deep: rgb(var(--cyan-deep));
+  --color-sand: rgb(var(--sand));
+  --color-fg: rgb(var(--fg));
+  --color-fg-muted: rgb(var(--fg-muted));
+  --color-fg-faint: rgb(var(--fg-faint));
+  --color-line: rgb(var(--line));
+  --color-line-strong: rgb(var(--line-strong));
+
+  --font-display: var(--font-display);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+  /* el header fijo no puede tapar el título de la sección al anclar */
+  scroll-padding-top: 5rem;
+}
+
+body {
+  margin: 0;
+  background: rgb(var(--midnight));
+  color: rgb(var(--fg));
+  font-family: var(--font-body);
+  line-height: 1.65;
+  letter-spacing: -0.011em;
+  overflow-x: hidden;
+  transition: background-color 0.9s ease-in-out, color 0.72s ease-in-out;
+}
+
+.hero-day-night {
+  background:
+    radial-gradient(circle at 82% 16%, rgb(255 255 255 / 0.78), transparent 34%),
+    linear-gradient(180deg, rgb(220 238 249 / 0.34), transparent 72%);
+  opacity: 0;
+  transition: opacity 1.15s ease-in-out;
+}
+
+:root[data-theme="light"] .hero-day-night { opacity: 1; }
+
+.theme-icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.theme-icon--sun { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+.theme-icon--moon { opacity: 0; transform: translate(-50%, -50%) rotate(-35deg) scale(0.65); }
+
+:root[data-theme="light"] .theme-icon--sun {
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(35deg) scale(0.65);
+}
+
+:root[data-theme="light"] .theme-icon--moon {
+  opacity: 1;
+  transform: translate(-50%, -50%) rotate(0deg) scale(1);
+}
+
+/* El PNG institucional tiene lettering blanco; en claro pasa a monocromo tinta. */
+:root[data-theme="light"] .brand-logo {
+  filter: brightness(0) saturate(100%);
+  opacity: 0.9;
+}
+
+.hero-frame {
+  height: var(--killa-mobile-vh, 100svh);
+  min-height: 32rem;
+}
+
+.hero-eyebrow-short,
+.hero-copy-short {
+  display: none;
+}
+
+::selection { background: rgb(var(--cyan) / 0.28); }
+
+:focus-visible {
+  outline: 2px solid rgb(var(--cyan-bright));
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/*
+ * Las clases propias van en @layer components a propósito: sin la capa,
+ * `.btn { display: inline-flex }` gana por orden de aparición y anula un
+ * `hidden` de Tailwind puesto en el mismo elemento. Con la capa declarada,
+ * las utilidades siempre pisan al componente y `hidden sm:inline-flex`
+ * funciona como uno espera.
+ */
+@layer components {
+  /* ---------- primitivas de layout ---------- */
+
+  .shell {
+    width: 100%;
+    max-width: var(--shell);
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 5vw, 2.5rem);
+  }
+
+  .section-pad { padding-block: var(--section-py); }
+
+  /* ---------- tipografía ---------- */
+
+  .display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 0.98;
+    text-wrap: balance;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: clamp(0.6875rem, 1.6vw, 0.75rem);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgb(var(--cyan));
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  /*
+   * El isotipo de Killa es una esfera con meridianos: nodos unidos por
+   * arcos. El "nodo" es el recurso propio de la marca — un punto cian con
+   * halo. Se repite en eyebrows, viñetas y en el corredor del hero para
+   * que el sitio hable el idioma del logo y no el de una plantilla.
+   */
+  .node-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: rgb(var(--cyan));
+    box-shadow: 0 0 0 3px rgb(var(--cyan) / 0.18), 0 0 12px rgb(var(--cyan) / 0.7);
+    flex: none;
+  }
+
+  /* ---------- superficies ---------- */
+
+  .card {
+    background:
+      linear-gradient(180deg, rgb(var(--surface) / 0.85), rgb(var(--night) / 0.85));
+    border: 1px solid rgb(var(--line));
+    border-radius: 18px;
+    transition: border-color 0.35s ease, transform 0.35s ease, box-shadow 0.35s ease;
+  }
+
+  .card:hover {
+    border-color: rgb(var(--line-strong));
+    box-shadow: 0 24px 60px -30px rgb(var(--cyan) / 0.35);
+  }
+
+  /* Línea cian que se dibuja en el borde superior al entrar el puntero. */
+  .card-topline { position: relative; overflow: hidden; }
+  .card-topline::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgb(var(--cyan)), transparent);
+    transform: scaleX(0);
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .card-topline:hover::after { transform: scaleX(1); }
+
+  /* Trama de red del fondo: cuadrícula fina, como un plano de tendido. */
+  .grid-weave {
+    background-image:
+      linear-gradient(rgb(var(--line) / 0.55) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--line) / 0.55) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(120% 90% at 50% 0%, #000 20%, transparent 78%);
+  }
+
+  .rule {
+    height: 1px;
+    background: linear-gradient(90deg, rgb(var(--line-strong)), transparent);
+  }
+
+  /* ---------- botones ---------- */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    border-radius: 999px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: -0.01em;
+    padding: 0.9rem 1.5rem;
+    min-height: 48px; /* objetivo táctil cómodo en celular */
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease,
+      border-color 0.25s ease, color 0.25s ease;
+  }
+
+  .btn-primary {
+    background: rgb(var(--cyan));
+    color: rgb(var(--midnight));
+    box-shadow: 0 12px 40px -14px rgb(var(--cyan) / 0.9);
+  }
+  .btn-primary:hover {
+    background: rgb(var(--cyan-bright));
+    transform: translateY(-2px);
+    box-shadow: 0 18px 50px -14px rgb(var(--cyan) / 1);
+  }
+
+  .btn-ghost {
+    background: rgb(var(--fg) / 0.04);
+    border-color: rgb(var(--line-strong));
+    color: rgb(var(--fg));
+  }
+  .btn-ghost:hover {
+    background: rgb(var(--fg) / 0.08);
+    border-color: rgb(var(--cyan) / 0.6);
+    transform: translateY(-2px);
+  }
+
+  /* ---------- animación de entrada ---------- */
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+  .reveal.is-visible { opacity: 1; transform: none; }
+
+
+
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: killa-marquee 38s linear infinite;
+  }
+
+  .ecosystem-card {
+    transform: translateZ(0);
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.45s ease, box-shadow 0.45s ease;
+  }
+
+  .ecosystem-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 32px 90px -45px rgb(var(--cyan) / 0.6);
+  }
+
+  .ecosystem-card--cyan {
+    background: linear-gradient(
+      145deg,
+      rgb(var(--cyan) / 0.13),
+      rgb(var(--surface) / 0.96) 58%
+    );
+  }
+
+  .ecosystem-card--sand {
+    background: linear-gradient(
+      145deg,
+      rgb(var(--sand) / 0.12),
+      rgb(var(--surface) / 0.96) 58%
+    );
+  }
+
+  :root[data-theme="light"] .ecosystem-card {
+    box-shadow: 0 22px 55px -38px rgb(var(--fg) / 0.25);
+  }
+
+  .ecosystem-orbit { animation: killa-orbit 22s linear infinite; }
+  .signal-sweep { animation: killa-signal 2.8s ease-in-out infinite; }
+
+  /* ---------- firma lunar interactiva ---------- */
+
+  .lunar-signature {
+    --lunar-rise-distance: clamp(14rem, 39vh, 18rem);
+    --lunar-scale: 1;
+    position: absolute;
+    right: 1.1rem;
+    top: 6.15rem;
+    z-index: 20;
+    width: 76px;
+    height: 92px;
+    opacity: 1;
+    transform: translateY(0) scale(var(--lunar-scale));
+    transform-origin: top right;
+    will-change: transform, opacity;
+    transition:
+      transform 1.35s cubic-bezier(0.65, 0, 0.35, 1),
+      opacity 0.95s ease-in-out;
+  }
+
+  :root[data-theme="light"] .lunar-signature {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(var(--lunar-rise-distance)) scale(var(--lunar-scale));
+  }
+
+  .lunar-trigger {
+    position: relative;
+    display: grid;
+    width: 76px;
+    place-items: center;
+    border: 0;
+    background: transparent;
+    color: rgb(var(--fg));
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .lunar-trigger:focus-visible {
+    border-radius: 999px;
+    outline-offset: 1px;
+  }
+
+  .lunar-moon {
+    display: block;
+    width: 66px;
+    height: 66px;
+    filter: drop-shadow(0 0 16px rgb(var(--sand) / 0.22));
+    animation: killa-moon-breathe 4.8s ease-in-out infinite;
+  }
+
+  .lunar-disc-ring {
+    fill: none;
+    stroke: rgb(var(--sand) / 0.5);
+    stroke-width: 1;
+  }
+
+  .lunar-crater { fill: rgb(var(--fg-faint) / 0.18); }
+
+  .lunar-date {
+    margin-top: -3px;
+    border: 1px solid rgb(var(--line));
+    border-radius: 999px;
+    background: rgb(var(--midnight) / 0.82);
+    padding: 2px 7px;
+    font-family: var(--font-mono);
+    font-size: 0.46rem;
+    letter-spacing: 0.14em;
+    color: rgb(var(--fg-faint));
+    backdrop-filter: blur(8px);
+  }
+
+  .lunar-orbit {
+    position: absolute;
+    left: 50%;
+    top: 33px;
+    width: 82px;
+    height: 82px;
+    transform: translate(-50%, -50%) rotate(-18deg);
+    border: 1px solid rgb(var(--sand) / 0.18);
+    border-radius: 999px;
+    pointer-events: none;
+    animation: killa-lunar-orbit 14s linear infinite;
+  }
+
+  .lunar-orbit span {
+    position: absolute;
+    left: 50%;
+    top: -2px;
+    width: 4px;
+    height: 4px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: rgb(var(--cyan-bright));
+    box-shadow: 0 0 10px rgb(var(--cyan));
+  }
+
+  .lunar-pulse {
+    position: absolute;
+    left: 50%;
+    top: 33px;
+    width: 58px;
+    height: 58px;
+    transform: translate(-50%, -50%);
+    border: 1px solid rgb(var(--sand) / 0.55);
+    border-radius: 999px;
+    pointer-events: none;
+    animation: killa-lunar-pulse 1.35s ease-out both;
+  }
+
+  .lunar-story {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.65rem);
+    width: min(15rem, calc(100vw - 2.5rem));
+    padding: 1rem 2.25rem 1rem 1rem;
+    border: 1px solid rgb(var(--sand) / 0.3);
+    border-radius: 15px;
+    background: rgb(var(--surface) / 0.94);
+    box-shadow: 0 24px 70px -30px rgb(var(--sand) / 0.45);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-8px) scale(0.96);
+    transform-origin: top right;
+    backdrop-filter: blur(18px);
+    transition: opacity 0.28s ease, transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .lunar-story.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+  }
+
+  @media (min-width: 1024px) {
+    .lunar-signature {
+      --lunar-rise-distance: 22rem;
+      --lunar-scale: 1.12;
+      right: 2rem;
+      top: 3.25rem;
+    }
+  }
+
+  /* ---------- mapa regional SVG ---------- */
+
+  .regional-network-map { overflow: visible; }
+
+  .map-camera {
+    transform-origin: 0 0;
+    transition: transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .province-shape {
+    fill: rgb(var(--surface) / 0.72);
+    stroke: rgb(var(--line-strong) / 0.9);
+    stroke-width: 1.1;
+    vector-effect: non-scaling-stroke;
+    transition: fill 0.35s ease, stroke 0.35s ease;
+  }
+
+  .province-shape[data-tone="light"] { fill: rgb(var(--surface-2) / 0.62); }
+
+  .province-label {
+    fill: rgb(var(--fg-faint) / 0.58);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+  }
+
+  .coverage-zone-group {
+    transition: opacity 0.35s ease;
+  }
+
+  .coverage-zone {
+    fill: none;
+    stroke: rgb(var(--zone-color, var(--cyan)) / 0.16);
+    stroke-width: 32;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.35s ease, filter 0.35s ease;
+  }
+
+  .coverage-zone-label {
+    fill: rgb(var(--zone-color, var(--cyan)));
+    stroke: rgb(var(--midnight) / 0.95);
+    stroke-width: 4px;
+    paint-order: stroke;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: opacity 0.35s ease;
+  }
+
+  .coverage-zone-group[data-selected="false"] { opacity: 0.14; }
+  .coverage-zone-group[data-selected="true"] .coverage-zone {
+    stroke: rgb(var(--zone-color, var(--cyan)) / 0.34);
+    stroke-width: 48;
+    filter: drop-shadow(0 0 12px rgb(var(--zone-color, var(--cyan)) / 0.28));
+  }
+
+  .coverage-zone-group[data-zone="ramal-norte"] { --zone-color: var(--cyan); }
+  .coverage-zone-group[data-zone="valles-calchaquies"] { --zone-color: var(--sand); }
+  .coverage-zone-group[data-zone="corredor-sur"] { --zone-color: 73 214 174; }
+
+  .network-link-base,
+  .network-link-flow {
+    fill: none;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .network-link-base {
+    stroke: rgb(var(--cyan) / 0.28);
+    stroke-width: 2;
+  }
+
+  .network-link-flow {
+    stroke: rgb(var(--cyan-bright) / 0.92);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-dasharray: 1 18;
+    filter: drop-shadow(0 0 5px rgb(var(--cyan) / 0.75));
+    animation: killa-map-flow 3.8s linear infinite;
+  }
+
+  .network-link-regional.network-link-base {
+    stroke: rgb(var(--sand) / 0.32);
+    stroke-dasharray: 5 9;
+  }
+
+  .network-link-regional.network-link-flow { stroke: rgb(var(--sand) / 0.82); }
+
+  .map-node-pulse {
+    fill: none;
+    stroke: rgb(var(--cyan) / 0.58);
+    stroke-width: 1.3;
+    transform-box: fill-box;
+    transform-origin: center;
+    vector-effect: non-scaling-stroke;
+    animation: killa-map-pulse 2.8s ease-out infinite;
+  }
+
+  .map-node-core {
+    fill: rgb(var(--cyan-bright));
+    stroke: rgb(var(--midnight));
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 0 5px rgb(var(--cyan) / 0.9));
+  }
+
+  .map-node-important .map-node-core { fill: rgb(var(--fg)); }
+
+  .map-node-selected .map-node-core {
+    fill: rgb(var(--fg));
+    stroke: rgb(var(--cyan-bright));
+    stroke-width: 3;
+    filter: drop-shadow(0 0 10px rgb(var(--cyan) / 1));
+  }
+
+  .map-node-selected .map-node-pulse {
+    stroke: rgb(var(--cyan-bright));
+    stroke-width: 2;
+  }
+
+  .map-node-label {
+    fill: rgb(var(--fg) / 0.94);
+    stroke: rgb(var(--midnight) / 0.96);
+    stroke-width: 4px;
+    stroke-linejoin: round;
+    paint-order: stroke;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  /* En móvil la cartografía es el segundo protagonista del primer pliegue. */
+  .network-map--responsive { opacity: 0.92; }
+  .network-map--responsive .province-label { opacity: 0.7; }
+  .network-map--responsive .map-node-label { opacity: 1; }
+  .network-map--responsive .coverage-zone-label { opacity: 0; }
+  .network-map--responsive .coverage-zone { stroke-opacity: 0.65; }
+
+  .regional-network-map.is-lunar-pulse .network-link-flow {
+    animation:
+      killa-map-flow 0.52s linear infinite,
+      killa-lunar-surge 1.55s 0.4s ease-out both;
+  }
+
+  .regional-network-map.is-lunar-pulse .map-node-core {
+    filter: drop-shadow(0 0 11px rgb(var(--sand) / 0.95));
+  }
+
+  .regional-network-map.is-lunar-pulse .map-node-pulse {
+    stroke: rgb(var(--sand) / 0.9);
+    animation-duration: 0.72s;
+  }
+
+  .regional-network-map.is-lunar-pulse .map-node-signal .map-node-core {
+    animation: killa-node-signal 0.64s ease-out both;
+    animation-delay: var(--signal-delay);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .regional-network-map.is-lunar-pulse .map-node-signal .map-node-pulse {
+    animation: killa-node-wave 0.72s ease-out both;
+    animation-delay: var(--signal-delay);
+  }
+
+  .network-online-dot {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 999px;
+    background: rgb(110 231 183);
+    box-shadow: 0 0 0 4px rgb(110 231 183 / 0.1), 0 0 16px rgb(110 231 183 / 0.75);
+    animation: killa-status-online 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes killa-pulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.35); }
+}
+@keyframes killa-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes killa-orbit { to { transform: translate(-50%, -50%) rotate(360deg); } }
+@keyframes killa-signal {
+  0%, 100% { opacity: 0.22; transform: translate(-50%, -50%) scaleX(0.55); }
+  50% { opacity: 0.9; transform: translate(-50%, -50%) scaleX(1); }
+}
+@keyframes killa-map-flow { to { stroke-dashoffset: -38; } }
+@keyframes killa-map-pulse {
+  0% { opacity: 0.9; transform: scale(0.45); }
+  78%, 100% { opacity: 0; transform: scale(1.9); }
+}
+@keyframes killa-status-online {
+  0%, 100% { opacity: 0.72; transform: scale(0.92); }
+  50% { opacity: 1; transform: scale(1.12); }
+}
+@keyframes killa-moon-breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-2px) scale(1.025); }
+}
+@keyframes killa-lunar-orbit { to { transform: translate(-50%, -50%) rotate(342deg); } }
+@keyframes killa-lunar-pulse {
+  0% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.82); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2.25); }
+}
+@keyframes killa-lunar-surge {
+  0%, 100% { opacity: 1; }
+  40% { opacity: 0.45; filter: drop-shadow(0 0 12px rgb(var(--sand))); }
+}
+@keyframes killa-node-signal {
+  0% { transform: scale(1); }
+  42% { fill: rgb(var(--moon-light)); transform: scale(1.9); filter: drop-shadow(0 0 13px rgb(var(--sand))); }
+  100% { transform: scale(1); }
+}
+@keyframes killa-node-wave {
+  0% { opacity: 0.9; transform: scale(0.35); }
+  100% { opacity: 0; transform: scale(2.5); }
+}
+
+/*
+ * Presupuesto vertical para Safari móvil con barras visibles. En un iPhone SE
+ * quedan 553 px: el copy corto evita que el CTA o el mapa salgan del pliegue.
+ */
+@media (max-width: 767px) and (max-height: 620px) {
+  .lunar-signature {
+    --lunar-scale: 0.84;
+    top: 5.1rem;
+  }
+  .hero-content { padding-block: 0.8rem; }
+  .hero-eyebrow-long,
+  .hero-copy-long { display: none; }
+  .hero-eyebrow-short { display: inline-flex; }
+  .hero-title {
+    margin-top: 0.65rem;
+    font-size: clamp(2rem, 8.3vw, 2.15rem);
+  }
+  .hero-primary { min-height: 44px; }
+  .hero-secondary { margin-top: 0.35rem; }
+  .hero-map { top: 7.9rem; }
+}
+
+@media (min-width: 1024px) {
+  .hero-frame {
+    height: auto;
+    min-height: 100svh;
+  }
+
+  .network-map--responsive { opacity: 1; }
+  .network-map--responsive .province-label,
+  .network-map--responsive .map-node-label { opacity: 1; }
+}
+
+/*
+ * Accesibilidad: quien pidió menos movimiento no ve ninguno. El canvas
+ * del hero se apaga solo (ver use-prefers-reduced-motion); acá se
+ * neutraliza todo lo declarativo.
+ */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  body,
+  .hero-day-night { transition-duration: 0.28s !important; }
+  .lunar-signature {
+    transform: translateY(0) scale(var(--lunar-scale)) !important;
+  }
+  :root[data-theme="light"] .lunar-signature { opacity: 0 !important; }
+  .reveal { opacity: 1; transform: none; }
+}

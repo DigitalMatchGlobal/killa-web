@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Isotipo de Killa reducido a favicon: la esfera con meridianos y nodos. -->
+  <rect width="64" height="64" rx="14" fill="#040A16"/>
+  <g fill="none" stroke="#00BCE8" stroke-width="2.4">
+    <circle cx="32" cy="32" r="19"/>
+    <path d="M32 13c-7 6-7 32 0 38"/>
+    <path d="M32 13c7 6 7 32 0 38"/>
+    <path d="M13.5 26.5c11 5 28 5 37 0"/>
+  </g>
+  <g fill="#EAF6FF">
+    <circle cx="32" cy="13" r="3.4"/>
+    <circle cx="14.6" cy="27.6" r="3.2"/>
+    <circle cx="49.4" cy="27.6" r="3.2"/>
+    <circle cx="32" cy="51" r="3.4"/>
+  </g>
+</svg>
