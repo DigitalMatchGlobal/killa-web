@@ -1,4 +1,5 @@
 import { Header } from "@/components/layout/header";
+import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import { WhatsappFab } from "@/components/layout/whatsapp-fab";
 import { Business } from "@/components/sections/business";
 import { Commitment } from "@/components/sections/commitment";
@@ -31,6 +32,7 @@ export default function Home() {
         <Commitment />
       </main>
       <Contact />
+      <ScrollToTop />
       <WhatsappFab />
     </>
   );
