@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
 import { Headphones, MapPin, MessageCircle, Search } from "lucide-react";
 
 import { NetworkCorridor } from "@/components/visual/network-corridor";
@@ -30,6 +30,7 @@ function localityMatches(locality: CoverageLocality, query: string) {
 }
 
 export function CoverageExplorer() {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [activeZone, setActiveZone] = useState<ServiceZoneId>("valles-calchaquies");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<CoverageLocality | null>(null);
@@ -51,6 +52,7 @@ export function CoverageExplorer() {
     setUnknownPlace("");
     setActiveZone(locality.zoneId);
     setSuggestionsOpen(false);
+    inputRef.current?.blur();
   }
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
@@ -63,6 +65,7 @@ export function CoverageExplorer() {
     setSelected(null);
     setUnknownPlace(query.trim() || "mi localidad");
     setSuggestionsOpen(false);
+    inputRef.current?.blur();
   }
 
   const whatsappMessage = selected
@@ -78,6 +81,7 @@ export function CoverageExplorer() {
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-faint" size={18} aria-hidden />
               <input
+                ref={inputRef}
                 id="coverage-search"
                 type="search"
                 value={query}
@@ -93,7 +97,7 @@ export function CoverageExplorer() {
                 aria-autocomplete="list"
                 aria-expanded={suggestionsOpen}
                 aria-controls="coverage-suggestions"
-                className="h-12 w-full rounded-xl border border-line bg-night/70 pl-10 pr-3 text-sm text-fg outline-none transition-colors placeholder:text-fg-faint focus:border-cyan"
+                className="h-12 w-full rounded-xl border border-line bg-night/70 pl-10 pr-3 text-base text-fg outline-none transition-colors placeholder:text-fg-faint focus:border-cyan sm:text-sm"
               />
               {suggestionsOpen && suggestions.length > 0 && (
                 <ul id="coverage-suggestions" role="listbox" className="absolute inset-x-0 top-[calc(100%+0.4rem)] z-40 max-h-64 overflow-y-auto rounded-xl border border-line bg-midnight p-1.5 shadow-2xl">
