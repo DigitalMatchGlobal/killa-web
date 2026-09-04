@@ -553,3 +553,64 @@ describe("perfiles: el rol no se auto-asigna", () => {
     await service.auth.admin.deleteUser(id);
   });
 });
+
+describe("privilegios de tabla: la RLS no es la única pata", () => {
+  /**
+   * POR QUÉ ESTE BLOQUE EXISTE
+   * Los privilegios por defecto de un proyecto Supabase NO son iguales en todas
+   * partes. El stack local de la CLI deja a `anon` sin nada; el proyecto real de
+   * Killa se creó con `anon` teniendo DELETE, INSERT, UPDATE y **TRUNCATE**
+   * sobre `articles`. Con RLS activo no se filtraba nada (las policies
+   * filtraban, y sin policy de DELETE un borrado anónimo afectaba 0 filas),
+   * pero la protección quedaba apoyada en una sola pata — y TRUNCATE saltea RLS
+   * por completo.
+   *
+   * La migración 20260904150000 revoca y re-otorga el mínimo. Estos tests miran
+   * el comportamiento observable: con los privilegios bien puestos, la base
+   * responde "permission denied" en vez de aceptar la operación y no hacer
+   * nada. Es la diferencia entre "no pasó nada esta vez" y "no puede pasar".
+   */
+
+  it("un DELETE anónimo es rechazado por privilegios, no sólo ignorado por RLS", async () => {
+    const draft = await seedArticle();
+    const { error } = await anon.from("articles").delete().eq("id", draft.id);
+
+    expect(error, "anon no debería tener siquiera el privilegio de DELETE").not.toBeNull();
+    expect(error?.message.toLowerCase()).toContain("permission denied");
+  });
+
+  it("un editor tampoco tiene el privilegio de DELETE", async () => {
+    const draft = await seedArticle();
+    const { error } = await editor.from("articles").delete().eq("id", draft.id);
+
+    expect(error).not.toBeNull();
+    expect(error?.message.toLowerCase()).toContain("permission denied");
+
+    const { data } = await service.from("articles").select("id").eq("id", draft.id);
+    expect(data?.length).toBe(1);
+  });
+
+  it("anon no alcanza la tabla de perfiles", async () => {
+    const { error } = await anon.from("profiles").select("id");
+    expect(error).not.toBeNull();
+    expect(error?.message.toLowerCase()).toContain("permission denied");
+  });
+
+  it("anon no puede ejecutar las funciones del backend editorial", async () => {
+    // Revocadas de PUBLIC, no sólo de anon: Postgres otorga EXECUTE a PUBLIC en
+    // toda función nueva, así que revocar sólo a `anon` no habría cambiado nada.
+    const { error } = await anon.rpc("article_image_in_use", { image_path: "x.jpg" });
+    expect(error).not.toBeNull();
+  });
+
+  it("pero la lectura pública sigue funcionando", async () => {
+    // La contracara: si el revoke se pasara de mano, el portal se cae entero.
+    const { data, error } = await anon
+      .from("articles")
+      .select("slug, category:categories ( name )")
+      .eq("status", "published");
+
+    expect(error).toBeNull();
+    expect((data ?? []).length).toBeGreaterThanOrEqual(3);
+  });
+});

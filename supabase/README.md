@@ -17,8 +17,12 @@ supabase/
 | `20260904120000_etapa1_editorial_schema.sql` | `profiles`, `categories`, `articles`, índices, triggers de reglas editoriales y todas las RLS |
 | `20260904120100_etapa1_editorial_storage.sql` | bucket `killa-news` + policies + `article_image_in_use()` |
 | `20260904120200_etapa1_editorial_seed.sql` | las 3 categorías y las 3 noticias que estaban en `lib/tv-news.ts` |
+| `20260904150000_etapa1_privilegios_minimos.sql` | revoca y re-otorga el mínimo a `anon`/`authenticated` (ver §Hallazgo de los privilegios) |
 
-Las tres son **idempotentes**: se pueden re-correr sin duplicar nada.
+Las cuatro son **idempotentes**: se pueden re-correr sin duplicar nada.
+
+**Estado en producción: las cuatro aplicadas el 2026-09-04** y registradas en
+`supabase_migrations.schema_migrations`.
 
 ## Levantar el entorno local (recomendado para trabajar)
 
@@ -57,7 +61,8 @@ trigger los toma.
 
 ## Aplicar al proyecto real
 
-El proyecto existe desde el 2026-09-04:
+El proyecto existe desde el 2026-09-04 y **ya tiene las migraciones aplicadas**.
+Esta sección queda para las próximas:
 
 | | |
 |---|---|
@@ -100,6 +105,23 @@ dentro de la URL (`&` → `%26`, `/` → `%2F`, `@` → `%40`, `#` → `%23`).
 **Opción C — SQL Editor.** Pegar el contenido de cada archivo de `migrations/`
 en orden de timestamp. Son idempotentes, así que re-correrlas no rompe nada.
 
+**Opción D — Management API** (la que se usó para el alta inicial, cuando la
+contraseña de la base no estaba disponible). Con el PAT alcanza:
+
+```bash
+curl -X POST "https://api.supabase.com/v1/projects/ztuhmauobojsiwgxrhqa/database/query" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
+  --data-binary @<(python3 -c "import json,sys;print(json.dumps({'query':open(sys.argv[1]).read()}))" supabase/migrations/XXXX.sql)
+```
+
+Si se aplica por esta vía hay que **registrar la versión a mano** para que la
+CLI no la crea pendiente:
+
+```sql
+insert into supabase_migrations.schema_migrations (version, name)
+values ('20260904150000','etapa1_privilegios_minimos') on conflict do nothing;
+```
+
 ⚠️ La contraseña de la base **no se guarda en el repo ni en `.env`**: la app no
 la usa (habla por la API REST con la clave anónima). Sólo hace falta para
 aplicar migraciones.
@@ -112,6 +134,42 @@ consola o Management API; `config.toml` gobierna el stack **local**.
 Al crear el proyecto real hay que verificar a mano dos cosas que `config.toml`
 no empuja: que el **registro público esté deshabilitado** y que el bucket
 `killa-news` haya quedado con sus policies.
+
+## Hallazgo de los privilegios (leer antes de agregar una tabla)
+
+Los privilegios por defecto de un proyecto Supabase **no son iguales en todas
+partes**, y esto se descubrió aplicando el esquema a producción:
+
+| | Stack local de la CLI | Proyecto real de Killa |
+|---|---|---|
+| `anon` sobre una tabla nueva | sólo `Dxtm` (nada de leer/escribir) | `SELECT, INSERT, UPDATE, DELETE, TRUNCATE` |
+
+O sea: en local hacían falta los `grant` explícitos para que el portal
+funcionara, y en producción hacía falta lo contrario — **revocar**. Con RLS
+activo no se filtraba nada, pero la protección quedaba apoyada en una sola pata
+(la ausencia de policy de DELETE) y **`TRUNCATE` saltea RLS por completo**.
+
+La migración `20260904150000` normaliza las dos situaciones: revoca todo y
+vuelve a otorgar el mínimo. Deja el mismo resultado sin importar con qué
+defaults se creó el proyecto.
+
+**Regla:** cada tabla nueva declara sus `grant` **y** revoca lo que no
+necesita. No confiar en los defaults del proyecto. Los tests de
+`npm run test:rules` verifican que un DELETE anónimo dé `permission denied` y
+no un silencioso "0 filas".
+
+## Configuración de Auth aplicada a mano en producción
+
+`config.toml` gobierna sólo el stack local, así que esto se seteó por
+Management API el 2026-09-04:
+
+| Ajuste | Valor | Por qué |
+|---|---|---|
+| `disable_signup` | `true` | Venía en `false`. El trigger le da rol `editor` a todo usuario nuevo de Auth: con registro abierto, cualquiera quedaba con permisos de escritura |
+| `password_min_length` | `8` | Venía en `6`, y la validación del panel exige 8: un admin podía crear una clave que después el login rechazaba |
+
+`mailer_autoconfirm` quedó en `false` (como venía). No molesta: las cuentas las
+crea un admin con el email ya confirmado, y no hay registro público.
 
 ## Decisiones de seguridad que conviene no revertir sin pensarlo
 

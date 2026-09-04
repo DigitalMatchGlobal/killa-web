@@ -1,9 +1,9 @@
 # Backend editorial de Killa TV — Etapa 1
 
 **Fecha:** 2026-09-04 · **Rama:** `feat/backend-editorial-etapa1` ·
-**Estado:** implementado y verificado en local. Proyecto Supabase real creado
-(`ztuhmauobojsiwgxrhqa`, us-east-2) pero **las migraciones todavía NO se
-aplicaron**: la contraseña de la base que se pasó no autentica. Ver §5.
+**Estado:** implementado, verificado en local y **aplicado al proyecto real**
+(`ztuhmauobojsiwgxrhqa`, us-east-2, Postgres 17.6) el 2026-09-04. La app ya lee
+de ese proyecto. Falta crear las cuentas del equipo de prensa y desplegar.
 
 Informe de qué se hizo, qué se decidió y por qué, y qué queda pendiente.
 El detalle de configuración vive en [`../supabase/README.md`](../supabase/README.md).
@@ -113,6 +113,22 @@ clave enciende el *proveedor* de email en GoTrue
 el login roto con "Email logins are disabled". El registro público se apaga con
 `auth.enable_signup = false`, que es lo que está.
 
+**Los privilegios por defecto NO son iguales en local y en producción.** En el
+stack local de la CLI, `anon` no hereda nada sobre una tabla nueva (hicieron
+falta los `grant`); en el proyecto real de Killa, `anon` heredó
+`SELECT, INSERT, UPDATE, DELETE` **y `TRUNCATE`**. Con RLS activo no se
+filtraba nada, pero la protección quedaba apoyada sólo en la ausencia de policy
+de DELETE — y `TRUNCATE` saltea RLS por completo. Se agregó la migración
+`20260904150000` que revoca y re-otorga el mínimo, más cinco tests que exigen
+que un DELETE anónimo devuelva `permission denied` en vez de un silencioso
+"0 filas".
+
+**El registro público venía abierto en el proyecto real** (`disable_signup:
+false`). Como el trigger le asigna rol `editor` a todo usuario nuevo de Auth,
+cualquiera podía registrarse y quedar con permisos de escritura. Se cerró por
+Management API, junto con subir el mínimo de contraseña de 6 a 8 para que
+coincida con lo que valida el panel.
+
 **Filtrar por categoría necesita `!inner`.** Sin el inner join en el `select`,
 un filtro sobre la tabla embebida no descarta filas: PostgREST devuelve la nota
 con `category: null`. Está documentado en `lib/editorial/queries.ts` y cubierto
@@ -125,7 +141,7 @@ por un test.
 | Comando | Qué prueba | Resultado |
 |---|---|---|
 | `npm run test` | Reglas puras: ranking de portada, saneamiento, validación de publicación, firma de imagen, mapeo del contrato | **25 ✅** |
-| `npm run test:rules` | RLS y reglas de la base contra un Postgres real con las policies aplicadas | **23 ✅** |
+| `npm run test:rules` | RLS, privilegios de tabla y reglas de la base contra un Postgres real | **28 ✅** |
 | `npm run test:e2e` | Los criterios de aceptación por HTTP, con el sitio levantado | **21 ✅** |
 | `npm run build` | Compila y prerenderiza las tres notas desde la base | ✅ |
 | `npm run lint` | Sin errores nuevos (queda 1 warning preexistente en `coverage-explorer.tsx`) | ✅ |
@@ -158,29 +174,42 @@ usuarios y escriben notas.
 
 ## 5. Pendientes
 
-**Bloqueado para pasar a producción:**
+**Hecho el 2026-09-04 sobre el proyecto real:**
 
-1. **Aplicar las migraciones al proyecto real.** El proyecto
-   `ztuhmauobojsiwgxrhqa` está creado y responde, pero la contraseña de la base
-   provista (15 caracteres) da `password authentication failed` — parece
-   truncada al copiarla del dashboard. Hace falta resetearla
-   (Settings → Database → Reset database password) y volver a intentar. Los tres
-   caminos posibles están en [`../supabase/README.md`](../supabase/README.md).
-2. **Cargar `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`** en
-   `.env.local` y en Vercel. La anon key todavía no se obtuvo: la cuenta
-   logueada en la CLI no ve la organización del proyecto nuevo (sólo
-   `Fundacion EA` y `BotWhatsAppDMG`).
-3. ⚠️ **Confirmar en qué organización quedó el proyecto y con qué plan.** La
-   política de la casa (`../../INFRAESTRUCTURA-DMG.md`) es un solo Supabase Pro
-   compartido; si este proyecto quedó en una organización nueva sin plan, no
-   hereda ni los backups ni los límites del Pro.
-4. ⚠️ **Rotar la contraseña de la base.** La que se compartió circuló en texto
-   plano por un canal de chat. Al resetearla se resuelven el punto 1 y este
-   juntos.
-5. **Crear las cuentas del equipo de prensa** y decidir quién es `admin`.
-6. **Contenido real**: las tres notas migradas son material institucional de
-   demostración. Si el cliente quiere estrenar con notas de verdad, se cargan
-   desde el panel.
+- Las 4 migraciones aplicadas y registradas en
+  `supabase_migrations.schema_migrations`. Se aplicaron por **Management API**
+  con el PAT, porque la contraseña de la base no estaba disponible; el proyecto
+  estaba completamente vacío (0 tablas, 0 buckets, 0 usuarios) antes de tocarlo.
+- Registro público cerrado y mínimo de contraseña alineado en 8.
+- `.env.local` apuntando al proyecto real con la clave **publishable**
+  (`sb_publishable_...`), no la anon legacy.
+- Verificado contra producción, sólo lecturas: `anon` ve las 3 notas publicadas
+  con su categoría; DELETE, INSERT, PATCH y el acceso a `profiles` dan 401; el
+  signup anónimo da 422; la subida anónima al bucket se rechaza; el bucket tiene
+  sus 4 policies, 5 MB y los 3 tipos; `npm run build` prerenderiza las 3 notas
+  desde la nube; `/tv`, la nota, la sección y el 404 de sección inexistente
+  responden bien, y `/tv/panel` sin sesión redirige al login.
+
+**Falta para poner el sitio en producción:**
+
+1. **Crear las cuentas del equipo de prensa** (Authentication → Add user, con
+   "Auto Confirm User") y decidir quién es `admin`:
+   `update public.profiles set role = 'admin' where id = '<uuid>';`
+   No lo hice: son datos de personas reales y no me los pasaste.
+2. **Cargar las dos variables en Vercel** (`NEXT_PUBLIC_SUPABASE_URL` y
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY`) y desplegar. Sin autorización explícita no
+   toqué Vercel ni pushee la rama.
+3. ⚠️ **Confirmar el plan de la organización** `swwsxexyzvbnzoqwzjgd`. El PAT no
+   tiene alcance para leerlo (`Forbidden`). La política de la casa
+   (`../../INFRAESTRUCTURA-DMG.md`) es un solo Supabase Pro compartido; si esta
+   cuenta dedicada de DigitalMatch quedó en plan free, el proyecto no hereda
+   backups ni límites del Pro — y eso es lo que sostiene la mensualidad del
+   doc 08.
+4. ⚠️ **El PAT circuló por chat.** Conviene revocarlo en
+   <https://supabase.com/dashboard/account/tokens> cuando termine el setup: da
+   acceso completo a la cuenta por API.
+5. **Contenido real**: las tres notas migradas son material institucional de
+   demostración.
 
 Además, quedan afuera a propósito y conviene tenerlos anotados:
 
@@ -211,6 +240,7 @@ supabase/README.md
 supabase/migrations/20260904120000_etapa1_editorial_schema.sql
 supabase/migrations/20260904120100_etapa1_editorial_storage.sql
 supabase/migrations/20260904120200_etapa1_editorial_seed.sql
+supabase/migrations/20260904150000_etapa1_privilegios_minimos.sql
 
 lib/supabase/env.ts                     lib/editorial/types.ts
 lib/supabase/server.ts                  lib/editorial/queries.ts
