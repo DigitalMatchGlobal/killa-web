@@ -18,7 +18,8 @@ import { mapArticle, resolveFeaturedImageUrl, type Article } from "@/lib/editori
 
 function article(overrides: Partial<Article> & { id: string }): Article {
   return {
-    id: overrides.id,
+    // `id` no se repite acá: el `...overrides` del final lo trae siempre (el
+    // tipo lo exige) y declararlo dos veces es un TS2783.
     title: overrides.title ?? "Nota",
     slug: overrides.slug ?? overrides.id,
     excerpt: "",

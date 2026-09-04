@@ -129,6 +129,16 @@ cualquiera podía registrarse y quedar con permisos de escritura. Se cerró por
 Management API, junto con subir el mínimo de contraseña de 6 a 8 para que
 coincida con lo que valida el panel.
 
+**El rol `admin` era auto-asignable por metadata.** El trigger original leía
+`raw_user_meta_data ->> 'role'`, así que un alta con `role: "admin"` en ese JSON
+creaba un perfil admin. En el flujo previsto lo llenaba un admin desde la
+consola, pero combinado con el registro abierto de fábrica ponía el privilegio
+más alto del sistema a un JSON de distancia de cualquiera. La migración
+`20260904160000` hace que el campo se ignore: todo usuario nace `editor` y la
+promoción es un `update` explícito. **No toca los perfiles existentes** — un
+update retroactivo podría dejar el proyecto sin ningún admin y pisaría una
+decisión tomada a mano.
+
 **Filtrar por categoría necesita `!inner`.** Sin el inner join en el `select`,
 un filtro sobre la tabla embebida no descarta filas: PostgREST devuelve la nota
 con `category: null`. Está documentado en `lib/editorial/queries.ts` y cubierto
@@ -141,7 +151,7 @@ por un test.
 | Comando | Qué prueba | Resultado |
 |---|---|---|
 | `npm run test` | Reglas puras: ranking de portada, saneamiento, validación de publicación, firma de imagen, mapeo del contrato | **25 ✅** |
-| `npm run test:rules` | RLS, privilegios de tabla y reglas de la base contra un Postgres real | **28 ✅** |
+| `npm run test:rules` | RLS, privilegios de tabla, rol admin y reglas de la base contra un Postgres real | **35 ✅** |
 | `npm run test:e2e` | Los criterios de aceptación por HTTP, con el sitio levantado | **21 ✅** |
 | `npm run build` | Compila y prerenderiza las tres notas desde la base | ✅ |
 | `npm run lint` | Sin errores nuevos (queda 1 warning preexistente en `coverage-explorer.tsx`) | ✅ |
@@ -241,6 +251,7 @@ supabase/migrations/20260904120000_etapa1_editorial_schema.sql
 supabase/migrations/20260904120100_etapa1_editorial_storage.sql
 supabase/migrations/20260904120200_etapa1_editorial_seed.sql
 supabase/migrations/20260904150000_etapa1_privilegios_minimos.sql
+supabase/migrations/20260904160000_etapa1_rol_admin_explicito.sql
 
 lib/supabase/env.ts                     lib/editorial/types.ts
 lib/supabase/server.ts                  lib/editorial/queries.ts

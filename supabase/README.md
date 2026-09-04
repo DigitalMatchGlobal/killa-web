@@ -18,10 +18,11 @@ supabase/
 | `20260904120100_etapa1_editorial_storage.sql` | bucket `killa-news` + policies + `article_image_in_use()` |
 | `20260904120200_etapa1_editorial_seed.sql` | las 3 categorías y las 3 noticias que estaban en `lib/tv-news.ts` |
 | `20260904150000_etapa1_privilegios_minimos.sql` | revoca y re-otorga el mínimo a `anon`/`authenticated` (ver §Hallazgo de los privilegios) |
+| `20260904160000_etapa1_rol_admin_explicito.sql` | el trigger de alta ignora `raw_user_meta_data.role`: todo usuario nace `editor` |
 
-Las cuatro son **idempotentes**: se pueden re-correr sin duplicar nada.
+Las cinco son **idempotentes**: se pueden re-correr sin duplicar nada.
 
-**Estado en producción: las cuatro aplicadas el 2026-09-04** y registradas en
+**Estado en producción: las cinco aplicadas el 2026-09-04** y registradas en
 `supabase_migrations.schema_migrations`.
 
 ## Levantar el entorno local (recomendado para trabajar)
@@ -49,15 +50,22 @@ un administrador. En local, desde el Studio: <http://127.0.0.1:54323> →
 Authentication → Add user (con "Auto Confirm User" tildado).
 
 El trigger `on_auth_user_created_editorial` le arma el perfil con rol `editor`.
-Para hacerlo `admin`:
+
+**La promoción a admin es una operación administrativa explícita**, a mano
+contra la tabla:
 
 ```sql
 update public.profiles set role = 'admin' where id = '<uuid del usuario>';
 ```
 
-En el proyecto real es lo mismo desde la consola de Supabase. También se puede
-pasar `display_name` (y `role: "admin"`) en el *user metadata* del alta: el
-trigger los toma.
+⚠️ **No sirve pasar `role: "admin"` en el *user metadata* del alta.** Desde la
+migración `20260904160000` el trigger ignora ese campo por completo: es metadata
+del usuario, no una fuente de autoridad, y si alguna vez se reabriera el
+registro público (o se habilitara un proveedor OAuth) quedaría bajo control de
+quien se registra. Sí se toma `display_name`: es un nombre, no un permiso.
+
+Hay 7 tests de regresión sobre esto en `tests/rules/`, incluido el control de
+que un admin promovido de verdad sí pueda hacer las operaciones de admin.
 
 ## Aplicar al proyecto real
 

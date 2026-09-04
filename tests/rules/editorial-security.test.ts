@@ -42,10 +42,13 @@ const anon = createClient(SUPABASE_URL, ANON_KEY, {
 });
 
 let editor: SupabaseClient;
+let admin: SupabaseClient;
 let outsider: SupabaseClient;
 let editorUserId = "";
+let adminUserId = "";
 let outsiderUserId = "";
 const createdArticleIds: string[] = [];
+const createdCategoryIds: string[] = [];
 
 async function signedInClient(email: string) {
   const client = createClient(SUPABASE_URL, ANON_KEY, {
@@ -97,22 +100,52 @@ async function seedArticle(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/** Categoría desechable, para los tests que necesitan borrar una. */
+async function seedCategory() {
+  const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const { data, error } = await service
+    .from("categories")
+    .insert({ name: `Prueba ${stamp}`, slug: `prueba-${stamp}` })
+    .select("id, slug")
+    .single();
+
+  if (error) throw new Error(`No se pudo sembrar la categoría: ${error.message}`);
+  createdCategoryIds.push(data.id as string);
+  return data as { id: string; slug: string };
+}
+
 beforeAll(async () => {
   editorUserId = await createUser(emails.editor, { display_name: "Editora de prueba" });
-  await createUser(emails.admin, { display_name: "Admin de prueba", role: "admin" });
+  adminUserId = await createUser(emails.admin, { display_name: "Admin de prueba" });
   outsiderUserId = await createUser(emails.outsider, { display_name: "Sin acceso" });
+
+  // El admin se promueve con un UPDATE explícito, que es exactamente el
+  // procedimiento previsto desde la migración 20260904160000. Pasarle
+  // `role: "admin"` en la metadata del alta ya NO hace nada.
+  const promote = await service
+    .from("profiles")
+    .update({ role: "admin" })
+    .eq("id", adminUserId)
+    .select("role")
+    .single();
+  if (promote.error) throw new Error(`No se pudo promover al admin: ${promote.error.message}`);
+  if (promote.data?.role !== "admin") throw new Error("el fixture de admin no quedó admin");
 
   // Un usuario de Auth sin perfil editorial: es el caso "se registró por otro
   // lado / le revocaron el acceso". Debe poder leer lo publicado y nada más.
   await service.from("profiles").delete().eq("id", outsiderUserId);
 
   editor = await signedInClient(emails.editor);
+  admin = await signedInClient(emails.admin);
   outsider = await signedInClient(emails.outsider);
 });
 
 afterAll(async () => {
   if (createdArticleIds.length > 0) {
     await service.from("articles").delete().in("id", createdArticleIds);
+  }
+  if (createdCategoryIds.length > 0) {
+    await service.from("categories").delete().in("id", createdCategoryIds);
   }
   for (const email of Object.values(emails)) {
     const { data } = await service.auth.admin.listUsers();
@@ -551,6 +584,111 @@ describe("perfiles: el rol no se auto-asigna", () => {
     expect(data?.display_name).toBe("Nuevo");
 
     await service.auth.admin.deleteUser(id);
+  });
+});
+
+describe("el rol admin NO se auto-asigna por metadata (migración 20260904160000)", () => {
+  /**
+   * `raw_user_meta_data` es metadata del usuario, no una fuente de autoridad.
+   * Antes el trigger la leía: un alta con `role: "admin"` en el JSON creaba un
+   * perfil admin. Si alguna vez se reabre el registro público —y el proyecto
+   * real venía con `disable_signup: false` de fábrica— eso pone el privilegio
+   * más alto del sistema a un JSON de distancia de cualquiera.
+   *
+   * Ahora el trigger ignora ese campo. La promoción es un UPDATE explícito.
+   */
+
+  let colado: SupabaseClient;
+  let coladoId = "";
+  const coladoEmail = `colado.${Date.now()}@killa.test`;
+
+  beforeAll(async () => {
+    // Alta pidiendo ser admin por la puerta de atrás.
+    coladoId = await createUser(coladoEmail, {
+      display_name: "Se anotó como admin",
+      role: "admin",
+    });
+    colado = await signedInClient(coladoEmail);
+  });
+
+  afterAll(async () => {
+    await service.auth.admin.deleteUser(coladoId);
+  });
+
+  it("el perfil queda como editor, no como admin", async () => {
+    const { data, error } = await service
+      .from("profiles")
+      .select("role, display_name")
+      .eq("id", coladoId)
+      .single();
+
+    expect(error).toBeNull();
+    expect(data?.role).toBe("editor");
+    // El nombre para mostrar sí se toma de la metadata: es un nombre, no un permiso.
+    expect(data?.display_name).toBe("Se anotó como admin");
+  });
+
+  it("la función del trigger tampoco quedó admin para el propio usuario", async () => {
+    // `editorial_role()` es lo que leen las policies. Si devolviera 'admin',
+    // el perfil diría una cosa y la autorización otra.
+    const { data, error } = await colado.rpc("editorial_role");
+    expect(error).toBeNull();
+    expect(data).toBe("editor");
+
+    const esAdmin = await colado.rpc("is_editorial_admin");
+    expect(esAdmin.data).toBe(false);
+  });
+
+  it("no puede borrar una categoría (operación exclusiva de admin)", async () => {
+    const categoria = await seedCategory();
+
+    await colado.from("categories").delete().eq("id", categoria.id);
+
+    const { data } = await service.from("categories").select("id").eq("id", categoria.id);
+    expect(data?.length, "el colado logró borrar una categoría").toBe(1);
+  });
+
+  it("no puede cambiarle el rol a otra persona", async () => {
+    await colado.from("profiles").update({ role: "admin" }).eq("id", editorUserId);
+
+    const { data } = await service
+      .from("profiles")
+      .select("role")
+      .eq("id", editorUserId)
+      .single();
+    expect(data?.role).toBe("editor");
+  });
+
+  it("tampoco puede promoverse a sí mismo", async () => {
+    await colado.from("profiles").update({ role: "admin" }).eq("id", coladoId);
+
+    const { data } = await service.from("profiles").select("role").eq("id", coladoId).single();
+    expect(data?.role).toBe("editor");
+  });
+
+  it("pero sí puede hacer el trabajo de editor: crear un borrador", async () => {
+    // La contracara: el usuario no está roto ni bloqueado, sólo no es admin.
+    const { data, error } = await colado
+      .from("articles")
+      .insert({ title: "Nota escrita por quien pidió ser admin" })
+      .select("id, status")
+      .single();
+
+    expect(error).toBeNull();
+    expect(data?.status).toBe("draft");
+    if (data?.id) createdArticleIds.push(data.id as string);
+  });
+
+  it("control: un admin promovido de verdad SÍ puede borrar una categoría", async () => {
+    // Si esto fallara, los tests de arriba no probarían nada: podrían estar
+    // pasando porque la operación es imposible para todos.
+    const categoria = await seedCategory();
+
+    const { error } = await admin.from("categories").delete().eq("id", categoria.id);
+    expect(error).toBeNull();
+
+    const { data } = await service.from("categories").select("id").eq("id", categoria.id);
+    expect(data).toEqual([]);
   });
 });
 
