@@ -2,10 +2,9 @@
 # NO contiene secretos: solo ajustes públicos. Las claves (anon/publishable,
 # service_role, JWT secret) viven en variables de entorno, nunca acá.
 #
-# `project_id` queda con el nombre local hasta que exista el proyecto real en la
-# organización de DMG. Al crearlo se reemplaza por su ref y se corre
-# `supabase link --project-ref <ref>`.
-project_id = "killa-web"
+# Ref del proyecto real (creado el 2026-09-04, región us-east-2). Es público:
+# aparece en la URL del proyecto y en la del dashboard.
+project_id = "ztuhmauobojsiwgxrhqa"
 
 [db]
 major_version = 17

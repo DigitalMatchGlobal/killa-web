@@ -57,15 +57,40 @@ trigger los toma.
 
 ## Aplicar al proyecto real
 
-⚠️ **El proyecto Supabase de Killa todavía no existe.** `config.toml` lleva
-`project_id = "killa-web"` como nombre local. Cuando se cree en la
-organización de DMG (ver `../../../INFRAESTRUCTURA-DMG.md`):
+El proyecto existe desde el 2026-09-04:
+
+| | |
+|---|---|
+| Ref | `ztuhmauobojsiwgxrhqa` |
+| URL | `https://ztuhmauobojsiwgxrhqa.supabase.co` |
+| Región | `us-east-2` |
+| Pooler | `aws-0-us-east-2.pooler.supabase.com:5432`, usuario `postgres.ztuhmauobojsiwgxrhqa` |
+
+**Opción A — CLI (recomendada).** Requiere que la cuenta logueada en la CLI sea
+la dueña del proyecto:
 
 ```bash
-supabase login
-supabase link --project-ref <ref-real>
-supabase db push              # aplica las migraciones pendientes
+supabase login                                   # o: supabase login --token <PAT>
+supabase link --project-ref ztuhmauobojsiwgxrhqa
+supabase db push                                 # pide la contraseña de la base
 ```
+
+**Opción B — sobre la connection string**, sin depender de qué cuenta esté
+logueada:
+
+```bash
+supabase db push --db-url "postgresql://postgres.ztuhmauobojsiwgxrhqa:<PASSWORD>@aws-0-us-east-2.pooler.supabase.com:5432/postgres"
+```
+
+Si la contraseña tiene caracteres especiales hay que **percent-encodearla**
+dentro de la URL (`&` → `%26`, `/` → `%2F`, `@` → `%40`, `#` → `%23`).
+
+**Opción C — SQL Editor.** Pegar el contenido de cada archivo de `migrations/`
+en orden de timestamp. Son idempotentes, así que re-correrlas no rompe nada.
+
+⚠️ La contraseña de la base **no se guarda en el repo ni en `.env`**: la app no
+la usa (habla por la API REST con la clave anónima). Sólo hace falta para
+aplicar migraciones.
 
 ⚠️ **Nunca `supabase config push`.** Sobreescribe la configuración de Auth del
 proyecto remoto con lo que haya en este archivo y ya nos costó un incidente en

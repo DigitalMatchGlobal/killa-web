@@ -1,8 +1,9 @@
 # Backend editorial de Killa TV — Etapa 1
 
 **Fecha:** 2026-09-04 · **Rama:** `feat/backend-editorial-etapa1` ·
-**Estado:** implementado y verificado en local. **Nada desplegado, nada aplicado
-a un proyecto real** (todavía no existe).
+**Estado:** implementado y verificado en local. Proyecto Supabase real creado
+(`ztuhmauobojsiwgxrhqa`, us-east-2) pero **las migraciones todavía NO se
+aplicaron**: la contraseña de la base que se pasó no autentica. Ver §5.
 
 Informe de qué se hizo, qué se decidió y por qué, y qué queda pendiente.
 El detalle de configuración vive en [`../supabase/README.md`](../supabase/README.md).
@@ -157,14 +158,27 @@ usuarios y escriben notas.
 
 ## 5. Pendientes
 
-**Para poner esto en producción hace falta una decisión que no es técnica:**
+**Bloqueado para pasar a producción:**
 
-1. **Crear el proyecto Supabase de Killa** en la organización de DMG (ver
-   `../../INFRAESTRUCTURA-DMG.md`), correr `supabase link` + `supabase db push`
-   y cargar las variables en Vercel. No se hizo: el brief pide no usar
-   producción sin autorización, y el MVP no está aprobado.
-2. **Crear las cuentas del equipo de prensa** y decidir quién es `admin`.
-3. **Contenido real**: las tres notas migradas son material institucional de
+1. **Aplicar las migraciones al proyecto real.** El proyecto
+   `ztuhmauobojsiwgxrhqa` está creado y responde, pero la contraseña de la base
+   provista (15 caracteres) da `password authentication failed` — parece
+   truncada al copiarla del dashboard. Hace falta resetearla
+   (Settings → Database → Reset database password) y volver a intentar. Los tres
+   caminos posibles están en [`../supabase/README.md`](../supabase/README.md).
+2. **Cargar `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY`** en
+   `.env.local` y en Vercel. La anon key todavía no se obtuvo: la cuenta
+   logueada en la CLI no ve la organización del proyecto nuevo (sólo
+   `Fundacion EA` y `BotWhatsAppDMG`).
+3. ⚠️ **Confirmar en qué organización quedó el proyecto y con qué plan.** La
+   política de la casa (`../../INFRAESTRUCTURA-DMG.md`) es un solo Supabase Pro
+   compartido; si este proyecto quedó en una organización nueva sin plan, no
+   hereda ni los backups ni los límites del Pro.
+4. ⚠️ **Rotar la contraseña de la base.** La que se compartió circuló en texto
+   plano por un canal de chat. Al resetearla se resuelven el punto 1 y este
+   juntos.
+5. **Crear las cuentas del equipo de prensa** y decidir quién es `admin`.
+6. **Contenido real**: las tres notas migradas son material institucional de
    demostración. Si el cliente quiere estrenar con notas de verdad, se cargan
    desde el panel.
 
