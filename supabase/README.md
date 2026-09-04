@@ -66,14 +66,26 @@ El proyecto existe desde el 2026-09-04:
 | Región | `us-east-2` |
 | Pooler | `aws-0-us-east-2.pooler.supabase.com:5432`, usuario `postgres.ztuhmauobojsiwgxrhqa` |
 
-**Opción A — CLI (recomendada).** Requiere que la cuenta logueada en la CLI sea
-la dueña del proyecto:
+El proyecto vive en una **cuenta dedicada de DigitalMatch**, distinta de la
+cuenta personal con la que suele estar logueada la CLI en las máquinas de
+desarrollo (por eso `supabase projects list` no lo muestra).
+
+**Opción A — CLI (recomendada).**
+
+⚠️ **No usar `supabase login --token`** para esto: sobreescribe el token
+guardado de la máquina y deja sin acceso a los otros proyectos de la casa
+(`sitio-evolucion-antoniana`, `WhatsAppBot_Rocket`). El token de DigitalMatch se
+pasa por variable de entorno, que sólo vale para ese comando:
 
 ```bash
-supabase login                                   # o: supabase login --token <PAT>
+export SUPABASE_ACCESS_TOKEN=<PAT de la cuenta DigitalMatch>   # no queda guardado
 supabase link --project-ref ztuhmauobojsiwgxrhqa
-supabase db push                                 # pide la contraseña de la base
+supabase db push                                               # pide la contraseña de la base
+unset SUPABASE_ACCESS_TOKEN
 ```
+
+El PAT se genera en <https://supabase.com/dashboard/account/tokens> **estando
+logueado con la cuenta de DigitalMatch**.
 
 **Opción B — sobre la connection string**, sin depender de qué cuenta esté
 logueada:
