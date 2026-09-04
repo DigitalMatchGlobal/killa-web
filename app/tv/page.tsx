@@ -5,15 +5,15 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
-  CalendarDays,
   LockKeyhole,
   Play,
   Share2,
 } from "lucide-react";
 
 import { Logo } from "@/components/brand/logo";
+import { ArticleCard } from "@/components/tv/article-card";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { tvNews } from "@/lib/tv-news";
+import { getCategories, getTvHomeData } from "@/lib/editorial/queries";
 
 export const metadata: Metadata = {
   title: "Killa TV",
@@ -45,10 +45,19 @@ export const metadata: Metadata = {
   },
 };
 
-const youtubeLive = "https://www.youtube.com/@killatvok/streams";
-const featured = tvNews[0];
+/** Se revalida sola cada 5 minutos; el panel además invalida al publicar. */
+export const revalidate = 300;
 
-export default function KillaTvPage() {
+const youtubeLive = "https://www.youtube.com/@killatvok/streams";
+
+export default async function KillaTvPage() {
+  // La regla de portada vive en el backend: destacada = mayor prioridad y, en
+  // empate, la más reciente. "Últimas" viene ya sin la destacada.
+  const [{ featured, latest }, categories] = await Promise.all([
+    getTvHomeData({ latestLimit: 9 }),
+    getCategories(),
+  ]);
+
   return (
     <div className="min-h-screen bg-midnight text-fg">
       <header className="sticky top-0 z-40 border-b border-line bg-midnight/88 backdrop-blur-xl">
@@ -64,7 +73,10 @@ export default function KillaTvPage() {
               rel="noopener noreferrer"
               className="hidden min-h-10 items-center gap-2 rounded-full border border-red-400/25 bg-red-400/[0.06] px-4 font-display text-sm font-semibold text-fg sm:inline-flex"
             >
-              <span className="size-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.75)]" aria-hidden />
+              <span
+                className="size-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.75)]"
+                aria-hidden
+              />
               Señal en vivo
             </a>
             <ThemeToggle />
@@ -95,12 +107,21 @@ export default function KillaTvPage() {
           <div className="shell py-8 sm:py-12">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="inline-flex rounded-full border border-sand/25 bg-sand/[0.06] px-3 py-1.5 font-mono text-[0.58rem] uppercase tracking-[0.13em] text-sand">
-                Mockup editorial · contenido inicial de muestra
+                Portal editorial · publicado por el equipo de Killa TV
               </p>
-              <nav className="flex gap-4 font-mono text-[0.62rem] uppercase tracking-[0.12em] text-fg-muted" aria-label="Categorías">
-                <span>Noticias</span>
-                <span>Deportes</span>
-                <span>Turismo</span>
+              <nav
+                className="flex gap-4 font-mono text-[0.62rem] uppercase tracking-[0.12em] text-fg-muted"
+                aria-label="Categorías"
+              >
+                {categories.map((category) => (
+                  <Link
+                    key={category.id}
+                    href={`/tv/categoria/${category.slug}`}
+                    className="transition-colors hover:text-sand"
+                  >
+                    {category.name}
+                  </Link>
+                ))}
               </nav>
             </div>
 
@@ -132,31 +153,43 @@ export default function KillaTvPage() {
                 </div>
               </div>
 
-              <a
-                href={"/tv/noticias/" + featured.slug}
-                className="group relative block aspect-[4/3] overflow-hidden rounded-[1.4rem] border border-line bg-surface sm:aspect-[16/9]"
-              >
-                <Image
-                  src={featured.image}
-                  alt={featured.imageAlt}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 760px"
-                  className="object-cover transition-transform duration-700 group-hover:scale-[1.025]"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent" aria-hidden />
-                <div className="absolute inset-x-0 bottom-0 p-5 text-white sm:p-7">
-                  <p className="font-mono text-[0.62rem] uppercase tracking-[0.15em] text-sand">
-                    {featured.category} · Destacada
-                  </p>
-                  <h2 className="mt-2 max-w-2xl font-display text-[clamp(1.35rem,4vw,2.2rem)] font-semibold leading-tight tracking-tight">
-                    {featured.title}
-                  </h2>
-                  <p className="mt-2 hidden max-w-xl text-sm text-white/70 sm:block">
-                    {featured.excerpt}
-                  </p>
+              {featured ? (
+                <Link
+                  href={`/tv/noticias/${featured.slug}`}
+                  className="group relative block aspect-[4/3] overflow-hidden rounded-[1.4rem] border border-line bg-surface sm:aspect-[16/9]"
+                >
+                  {featured.featuredImageUrl ? (
+                    <Image
+                      src={featured.featuredImageUrl}
+                      alt={featured.imageAlt}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 760px"
+                      className="object-cover transition-transform duration-700 group-hover:scale-[1.025]"
+                      priority
+                    />
+                  ) : null}
+                  <div
+                    className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/25 to-transparent"
+                    aria-hidden
+                  />
+                  <div className="absolute inset-x-0 bottom-0 p-5 text-white sm:p-7">
+                    <p className="font-mono text-[0.62rem] uppercase tracking-[0.15em] text-sand">
+                      {featured.category.name} · Destacada
+                    </p>
+                    <h2 className="mt-2 max-w-2xl font-display text-[clamp(1.35rem,4vw,2.2rem)] font-semibold leading-tight tracking-tight">
+                      {featured.title}
+                    </h2>
+                    <p className="mt-2 hidden max-w-xl text-sm text-white/70 sm:block">
+                      {featured.excerpt}
+                    </p>
+                  </div>
+                </Link>
+              ) : (
+                <div className="grid aspect-[4/3] place-items-center rounded-[1.4rem] border border-dashed border-line-strong bg-surface/50 px-6 text-center text-sm text-fg-faint sm:aspect-[16/9]">
+                  Todavía no hay noticias publicadas. La primera que se publique desde
+                  el panel aparece acá.
                 </div>
-              </a>
+              )}
             </div>
           </div>
         </section>
@@ -170,44 +203,19 @@ export default function KillaTvPage() {
               </h2>
             </div>
             <p className="max-w-sm text-sm text-fg-muted">
-              Tres noticias iniciales incluidas para entregar el portal listo para operar.
+              {latest.total > 0
+                ? `${latest.total} ${latest.total === 1 ? "nota publicada" : "notas publicadas"} además de la destacada.`
+                : "Cuando el equipo publique más notas, se listan acá en orden cronológico."}
             </p>
           </div>
 
-          <div className="mt-10 grid gap-4 lg:grid-cols-3">
-            {tvNews.map((article) => (
-              <article key={article.slug} className="card group overflow-hidden">
-                <Link href={"/tv/noticias/" + article.slug} className="block">
-                  <div className="relative aspect-[16/10] overflow-hidden border-b border-line">
-                    <Image
-                      src={article.image}
-                      alt={article.imageAlt}
-                      fill
-                      sizes="(max-width: 1024px) 100vw, 400px"
-                      className="object-cover transition-transform duration-700 group-hover:scale-[1.035]"
-                    />
-                  </div>
-                  <div className="p-5 sm:p-6">
-                    <div className="flex items-center justify-between gap-3 font-mono text-[0.58rem] uppercase tracking-[0.11em]">
-                      <span className="text-sand">{article.category}</span>
-                      <span className="inline-flex items-center gap-1.5 text-fg-faint">
-                        <CalendarDays size={12} aria-hidden />
-                        30 AGO
-                      </span>
-                    </div>
-                    <h3 className="mt-4 font-display text-xl font-semibold leading-tight tracking-tight">
-                      {article.title}
-                    </h3>
-                    <p className="mt-3 text-sm text-fg-muted">{article.excerpt}</p>
-                    <span className="mt-6 inline-flex items-center gap-2 font-display text-sm font-semibold text-sand">
-                      Leer nota
-                      <ArrowUpRight size={15} aria-hidden />
-                    </span>
-                  </div>
-                </Link>
-              </article>
-            ))}
-          </div>
+          {latest.items.length > 0 ? (
+            <div className="mt-10 grid gap-4 lg:grid-cols-3">
+              {latest.items.map((article) => (
+                <ArticleCard key={article.id} article={article} />
+              ))}
+            </div>
+          ) : null}
         </section>
 
         <section className="border-y border-line bg-night/70">
@@ -229,32 +237,41 @@ export default function KillaTvPage() {
                 </p>
               </div>
             </div>
-            <Link href="/tv/panel" className="btn btn-ghost w-full border-sand/35 hover:border-sand/70 lg:w-auto">
-              Ver mockup del panel
+            <Link
+              href="/tv/panel"
+              className="btn btn-ghost w-full border-sand/35 hover:border-sand/70 lg:w-auto"
+            >
+              Entrar al panel
               <ArrowUpRight size={17} aria-hidden />
             </Link>
           </div>
         </section>
 
-        <section className="shell py-10 sm:py-12">
-          <div className="flex flex-col gap-5 rounded-[1.4rem] border border-line bg-surface/55 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
-            <div className="flex items-start gap-4">
-              <Share2 size={20} className="mt-1 shrink-0 text-cyan" aria-hidden />
-              <div>
-                <h2 className="font-display text-xl font-semibold">
-                  Cada nota, lista para compartir
-                </h2>
-                <p className="mt-1 max-w-xl text-sm text-fg-muted">
-                  Título, imagen destacada y vista previa optimizada para WhatsApp y redes.
-                </p>
+        {featured ? (
+          <section className="shell py-10 sm:py-12">
+            <div className="flex flex-col gap-5 rounded-[1.4rem] border border-line bg-surface/55 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+              <div className="flex items-start gap-4">
+                <Share2 size={20} className="mt-1 shrink-0 text-cyan" aria-hidden />
+                <div>
+                  <h2 className="font-display text-xl font-semibold">
+                    Cada nota, lista para compartir
+                  </h2>
+                  <p className="mt-1 max-w-xl text-sm text-fg-muted">
+                    Título, imagen destacada y vista previa optimizada para WhatsApp y
+                    redes.
+                  </p>
+                </div>
               </div>
+              <Link
+                href={`/tv/noticias/${featured.slug}`}
+                className="btn btn-ghost w-full sm:w-auto"
+              >
+                Ver una nota
+                <ArrowUpRight size={17} aria-hidden />
+              </Link>
             </div>
-            <Link href={"/tv/noticias/" + featured.slug} className="btn btn-ghost w-full sm:w-auto">
-              Ver una nota
-              <ArrowUpRight size={17} aria-hidden />
-            </Link>
-          </div>
-        </section>
+          </section>
+        ) : null}
       </main>
 
       <footer className="border-t border-line">

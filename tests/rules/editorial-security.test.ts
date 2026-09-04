@@ -1,0 +1,555 @@
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
+/**
+ * Reglas críticas contra un Supabase REAL (el stack local).
+ *
+ * POR QUÉ EXISTEN ADEMÁS DE LOS UNITARIOS
+ * Los unitarios prueban que nuestra lógica esté bien. No pueden probar que las
+ * **RLS** hagan lo que asumimos: eso sólo se verifica hablándole a un Postgres
+ * con las policies aplicadas. Es la diferencia entre "el código filtra los
+ * borradores" y "un borrador no puede salir de la base ni con la consulta
+ * equivocada".
+ *
+ * GUARDARRAÍL: si la URL no es local, el suite aborta. Estos tests escriben.
+ */
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+
+const isLocal = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(SUPABASE_URL);
+if (!isLocal) {
+  throw new Error(
+    `Estos tests escriben datos y sólo corren contra el stack local. URL recibida: "${SUPABASE_URL}". Usá \`npm run test:rules\`.`,
+  );
+}
+
+const PASSWORD = "killa-tests-2026";
+const emails = {
+  editor: `editor.${Date.now()}@killa.test`,
+  admin: `admin.${Date.now()}@killa.test`,
+  outsider: `random.${Date.now()}@killa.test`,
+};
+
+/** Cliente con clave de servicio: sólo para preparar y limpiar el escenario. */
+const service = createClient(SUPABASE_URL, SERVICE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+
+const anon = createClient(SUPABASE_URL, ANON_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+
+let editor: SupabaseClient;
+let outsider: SupabaseClient;
+let editorUserId = "";
+let outsiderUserId = "";
+const createdArticleIds: string[] = [];
+
+async function signedInClient(email: string) {
+  const client = createClient(SUPABASE_URL, ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { error } = await client.auth.signInWithPassword({ email, password: PASSWORD });
+  if (error) throw new Error(`No se pudo iniciar sesión con ${email}: ${error.message}`);
+  return client;
+}
+
+async function createUser(email: string, meta?: Record<string, unknown>) {
+  const { data, error } = await service.auth.admin.createUser({
+    email,
+    password: PASSWORD,
+    email_confirm: true,
+    user_metadata: meta,
+  });
+  if (error) throw new Error(`No se pudo crear ${email}: ${error.message}`);
+  return data.user.id;
+}
+
+/** Nota de prueba, creada con service_role para no depender de las policies. */
+async function seedArticle(overrides: Record<string, unknown> = {}) {
+  const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const { data, error } = await service
+    .from("articles")
+    .insert({
+      title: `Nota de prueba ${stamp}`,
+      slug: `nota-de-prueba-${stamp}`,
+      excerpt: "Bajada de prueba con largo suficiente para publicar.",
+      body: "Cuerpo de prueba. ".repeat(15),
+      featured_image_path: "2026/09/prueba.jpg",
+      image_alt: "Imagen de prueba del test",
+      status: "draft",
+      priority: 1,
+      ...overrides,
+    })
+    .select("id, slug, status, published_at, priority")
+    .single();
+
+  if (error) throw new Error(`No se pudo sembrar la nota: ${error.message}`);
+  createdArticleIds.push(data.id as string);
+  return data as {
+    id: string;
+    slug: string;
+    status: string;
+    published_at: string | null;
+    priority: number;
+  };
+}
+
+beforeAll(async () => {
+  editorUserId = await createUser(emails.editor, { display_name: "Editora de prueba" });
+  await createUser(emails.admin, { display_name: "Admin de prueba", role: "admin" });
+  outsiderUserId = await createUser(emails.outsider, { display_name: "Sin acceso" });
+
+  // Un usuario de Auth sin perfil editorial: es el caso "se registró por otro
+  // lado / le revocaron el acceso". Debe poder leer lo publicado y nada más.
+  await service.from("profiles").delete().eq("id", outsiderUserId);
+
+  editor = await signedInClient(emails.editor);
+  outsider = await signedInClient(emails.outsider);
+});
+
+afterAll(async () => {
+  if (createdArticleIds.length > 0) {
+    await service.from("articles").delete().in("id", createdArticleIds);
+  }
+  for (const email of Object.values(emails)) {
+    const { data } = await service.auth.admin.listUsers();
+    const user = data?.users.find((candidate) => candidate.email === email);
+    if (user) await service.auth.admin.deleteUser(user.id);
+  }
+});
+
+// ---------------------------------------------------------------------------
+
+describe("criterio 1: sin sesión no se modifica contenido", () => {
+  it("anon no puede insertar una nota", async () => {
+    const { error } = await anon.from("articles").insert({
+      title: "Nota intrusa desde el anonimato",
+      slug: "nota-intrusa",
+    });
+    expect(error).not.toBeNull();
+  });
+
+  it("anon no puede publicar una nota existente", async () => {
+    const draft = await seedArticle();
+    const { error, data } = await anon
+      .from("articles")
+      .update({ status: "published" })
+      .eq("id", draft.id)
+      .select("id");
+
+    // RLS puede responder con error o con cero filas afectadas: lo que importa
+    // es que la nota no cambie de estado.
+    expect(error !== null || (data ?? []).length === 0).toBe(true);
+
+    const { data: after } = await service
+      .from("articles")
+      .select("status")
+      .eq("id", draft.id)
+      .single();
+    expect(after?.status).toBe("draft");
+  });
+
+  it("nadie puede borrar una nota: la baja es archivar", async () => {
+    const draft = await seedArticle();
+
+    for (const [label, client] of [
+      ["anon", anon],
+      ["editor", editor],
+    ] as const) {
+      await client.from("articles").delete().eq("id", draft.id);
+      const { data } = await service.from("articles").select("id").eq("id", draft.id);
+      expect(data?.length, `${label} logró borrar la nota`).toBe(1);
+    }
+  });
+
+  it("no hay registro público: nadie se puede dar de alta solo", async () => {
+    // Es la otra mitad de la defensa del panel. El trigger le pone rol
+    // `editor` a todo usuario nuevo, así que si el registro estuviera abierto
+    // cualquiera se convertiría en editor. Lo apaga
+    // `auth.enable_signup = false` en supabase/config.toml.
+    const { error } = await anon.auth.signUp({
+      email: `intruso.${Date.now()}@killa.test`,
+      password: PASSWORD,
+    });
+
+    expect(error).not.toBeNull();
+  });
+
+  it("un usuario autenticado sin perfil editorial no puede escribir", async () => {
+    const { error } = await outsider.from("articles").insert({
+      title: "Nota de alguien sin permisos",
+      slug: "nota-sin-permisos",
+    });
+    expect(error).not.toBeNull();
+  });
+});
+
+describe("criterio 2: el público sólo ve lo publicado", () => {
+  it("un borrador no sale por la clave anónima", async () => {
+    const draft = await seedArticle();
+    const { data } = await anon.from("articles").select("id").eq("id", draft.id);
+    expect(data).toEqual([]);
+  });
+
+  it("una nota archivada tampoco", async () => {
+    const archived = await seedArticle({
+      status: "published",
+      published_at: new Date().toISOString(),
+    });
+    await service.from("articles").update({ status: "archived" }).eq("id", archived.id);
+
+    const { data } = await anon.from("articles").select("id").eq("id", archived.id);
+    expect(data).toEqual([]);
+  });
+
+  it("una publicada sí, y la fila sigue existiendo tras archivarla", async () => {
+    const published = await seedArticle({
+      status: "published",
+      published_at: new Date().toISOString(),
+    });
+
+    const visible = await anon.from("articles").select("id").eq("id", published.id);
+    expect(visible.data?.length).toBe(1);
+
+    await service.from("articles").update({ status: "archived" }).eq("id", published.id);
+    const { data: still } = await service.from("articles").select("id").eq("id", published.id);
+    expect(still?.length).toBe(1);
+  });
+
+  it("un usuario sin perfil editorial ve lo mismo que el público", async () => {
+    const draft = await seedArticle();
+    const { data } = await outsider.from("articles").select("id").eq("id", draft.id);
+    expect(data).toEqual([]);
+  });
+});
+
+describe("criterio 3: el editor recorre el ciclo completo", () => {
+  it("crea borrador, edita, publica y archiva", async () => {
+    const stamp = Date.now();
+
+    const created = await editor
+      .from("articles")
+      .insert({
+        title: `Nota del editor ${stamp}`,
+        slug: `nota-del-editor-${stamp}`,
+        excerpt: "Una bajada con largo suficiente para pasar la validación.",
+        body: "Texto de la nota. ".repeat(15),
+        featured_image_path: "2026/09/editor.jpg",
+        image_alt: "Foto cargada por la editora",
+      })
+      .select("id, status, published_at, author_id")
+      .single();
+
+    expect(created.error).toBeNull();
+    const id = created.data!.id as string;
+    createdArticleIds.push(id);
+
+    // Nace borrador y sin fecha de publicación.
+    expect(created.data!.status).toBe("draft");
+    expect(created.data!.published_at).toBeNull();
+    // El autor se registra solo, desde la sesión.
+    expect(created.data!.author_id).toBe(editorUserId);
+
+    // Edita.
+    const edited = await editor
+      .from("articles")
+      .update({ title: `Nota del editor ${stamp} (corregida)` })
+      .eq("id", id)
+      .select("title, updated_by")
+      .single();
+    expect(edited.error).toBeNull();
+    expect(edited.data!.title).toContain("corregida");
+    expect(edited.data!.updated_by).toBe(editorUserId);
+
+    // Publica: la base pone published_at.
+    const published = await editor
+      .from("articles")
+      .update({ status: "published" })
+      .eq("id", id)
+      .select("status, published_at")
+      .single();
+    expect(published.error).toBeNull();
+    expect(published.data!.status).toBe("published");
+    expect(published.data!.published_at).not.toBeNull();
+
+    const firstPublishedAt = published.data!.published_at as string;
+
+    // Archiva y vuelve a publicar: conserva la fecha original.
+    await editor.from("articles").update({ status: "archived" }).eq("id", id);
+    const republished = await editor
+      .from("articles")
+      .update({ status: "published" })
+      .eq("id", id)
+      .select("published_at")
+      .single();
+    expect(republished.data!.published_at).toBe(firstPublishedAt);
+  });
+
+  it("no se puede publicar sin imagen ni texto alternativo", async () => {
+    const incomplete = await seedArticle({ featured_image_path: null, image_alt: null });
+
+    const { error } = await editor
+      .from("articles")
+      .update({ status: "published" })
+      .eq("id", incomplete.id);
+
+    expect(error).not.toBeNull();
+    expect(error?.message.toLowerCase()).toContain("articles_published_needs_image");
+  });
+
+  it("los slugs se normalizan y no se repiten", async () => {
+    const first = await editor
+      .from("articles")
+      .insert({ title: "Ñandú en Cafayate: crónica de un día ÚNICO" })
+      .select("id, slug")
+      .single();
+    const second = await editor
+      .from("articles")
+      .insert({ title: "Ñandú en Cafayate: crónica de un día ÚNICO" })
+      .select("id, slug")
+      .single();
+
+    createdArticleIds.push(first.data!.id as string, second.data!.id as string);
+
+    expect(first.data!.slug).toBe("nandu-en-cafayate-cronica-de-un-dia-unico");
+    expect(second.data!.slug).toBe("nandu-en-cafayate-cronica-de-un-dia-unico-2");
+  });
+
+  it("la prioridad fuera de 1..5 la rechaza la base", async () => {
+    const { error } = await editor
+      .from("articles")
+      .insert({ title: "Nota con prioridad inválida", priority: 9 });
+    expect(error).not.toBeNull();
+  });
+});
+
+describe("criterios 5 y 6: portada y orden cronológico, resueltos en SQL", () => {
+  it("la consulta de portada devuelve la de mayor prioridad y, en empate, la más reciente", async () => {
+    // Escenario aislado: se archiva todo lo demás para que el ranking sea
+    // observable sin depender del seed.
+    const { data: preexisting } = await service
+      .from("articles")
+      .select("id")
+      .eq("status", "published");
+    const parked = (preexisting ?? []).map((row) => row.id as string);
+    if (parked.length > 0) {
+      await service.from("articles").update({ status: "archived" }).in("id", parked);
+    }
+
+    const vieja = await seedArticle({
+      status: "published",
+      priority: 1,
+      published_at: "2026-08-01T10:00:00Z",
+    });
+    const reciente = await seedArticle({
+      status: "published",
+      priority: 1,
+      published_at: "2026-09-01T10:00:00Z",
+    });
+    const prioritariaVieja = await seedArticle({
+      status: "published",
+      priority: 4,
+      published_at: "2026-07-01T10:00:00Z",
+    });
+    const prioritariaNueva = await seedArticle({
+      status: "published",
+      priority: 4,
+      published_at: "2026-07-15T10:00:00Z",
+    });
+
+    // Exactamente la consulta de getFeaturedArticle().
+    const featured = await anon
+      .from("articles")
+      .select("id")
+      .eq("status", "published")
+      .order("priority", { ascending: false })
+      .order("published_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    expect(featured.data?.id).toBe(prioritariaNueva.id);
+
+    // Y la de getLatestArticles(), excluyendo la destacada.
+    const latest = await anon
+      .from("articles")
+      .select("id")
+      .eq("status", "published")
+      .neq("id", prioritariaNueva.id)
+      .order("published_at", { ascending: false });
+
+    expect(latest.data?.map((row) => row.id)).toEqual([
+      reciente.id,
+      vieja.id,
+      prioritariaVieja.id,
+    ]);
+
+    // Devolver el escenario a como estaba.
+    if (parked.length > 0) {
+      await service.from("articles").update({ status: "published" }).in("id", parked);
+    }
+  });
+});
+
+describe("filtro por categoría y paginación", () => {
+  it("el inner join filtra de verdad y el conteo sirve para paginar", async () => {
+    const { data: categories } = await service.from("categories").select("id, slug");
+    const noticias = categories?.find((row) => row.slug === "noticias");
+    const deportes = categories?.find((row) => row.slug === "deportes");
+    expect(noticias, "falta la categoría Noticias del seed").toBeDefined();
+    expect(deportes, "falta la categoría Deportes del seed").toBeDefined();
+
+    const enDeportes = await seedArticle({
+      category_id: deportes!.id,
+      status: "published",
+      published_at: "2026-09-02T10:00:00Z",
+    });
+    await seedArticle({
+      category_id: noticias!.id,
+      status: "published",
+      published_at: "2026-09-03T10:00:00Z",
+    });
+    // Sin sección: no debe aparecer en ninguna categoría.
+    await seedArticle({
+      category_id: null,
+      status: "published",
+      published_at: "2026-09-04T10:00:00Z",
+    });
+
+    // Exactamente la consulta de getArticlesByCategory(): sin `!inner` este
+    // filtro NO descartaría filas, sólo dejaría `category` en null.
+    const { data, count, error } = await anon
+      .from("articles")
+      .select("id, category:categories!inner ( slug )", { count: "exact" })
+      .eq("status", "published")
+      .eq("category.slug", "deportes")
+      .order("published_at", { ascending: false })
+      .range(0, 8);
+
+    expect(error).toBeNull();
+    expect(data?.map((row) => row.id)).toEqual([enDeportes.id]);
+    expect(count).toBe(1);
+  });
+
+  it("el rango devuelve una página y el conteo total sigue siendo el completo", async () => {
+    const { data, count } = await anon
+      .from("articles")
+      .select("id", { count: "exact" })
+      .eq("status", "published")
+      .order("published_at", { ascending: false })
+      .range(0, 1);
+
+    expect(data?.length).toBeLessThanOrEqual(2);
+    expect(count ?? 0).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("criterio 4: imágenes", () => {
+  const BUCKET = "killa-news";
+  // JPEG mínimo válido (firma + fin de imagen).
+  const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0xff, 0xd9]);
+
+  it("el bucket sólo admite JPEG, PNG y WebP, hasta 5 MB", async () => {
+    // Se consulta por la API de storage y no por PostgREST: `storage.buckets`
+    // no está expuesta, y esta es además la vía que usa la app.
+    const listed = await service.storage.listBuckets();
+    const bucket = listed.data?.find((candidate) => candidate.id === BUCKET);
+
+    expect(bucket, "el bucket killa-news no existe").toBeDefined();
+
+    // La API de storage responde en snake_case; los tipos de supabase-js
+    // prometen camelCase. Se aceptan las dos formas para no atarse a eso.
+    const raw = bucket as unknown as {
+      public: boolean;
+      file_size_limit?: number;
+      fileSizeLimit?: number;
+      allowed_mime_types?: string[];
+      allowedMimeTypes?: string[];
+    };
+
+    expect(raw.allowed_mime_types ?? raw.allowedMimeTypes).toEqual([
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ]);
+    expect(raw.file_size_limit ?? raw.fileSizeLimit).toBe(5242880);
+    // Lectura pública a propósito: las vistas previas sociales piden la imagen
+    // sin sesión (ver la cabecera de la migración de storage).
+    expect(raw.public).toBe(true);
+  });
+
+  it("un editor puede subir una imagen válida", async () => {
+    const path = `tests/${Date.now()}-ok.jpg`;
+    const { error } = await editor.storage
+      .from(BUCKET)
+      .upload(path, jpeg, { contentType: "image/jpeg" });
+
+    expect(error).toBeNull();
+    await service.storage.from(BUCKET).remove([path]);
+  });
+
+  it("el bucket rechaza un tipo no admitido", async () => {
+    const path = `tests/${Date.now()}-malo.svg`;
+    const { error } = await editor.storage
+      .from(BUCKET)
+      .upload(path, new Uint8Array([0x3c, 0x73, 0x76, 0x67]), {
+        contentType: "image/svg+xml",
+      });
+
+    expect(error).not.toBeNull();
+  });
+
+  it("anon no puede subir nada", async () => {
+    const { error } = await anon.storage
+      .from(BUCKET)
+      .upload(`tests/${Date.now()}-anon.jpg`, jpeg, { contentType: "image/jpeg" });
+
+    expect(error).not.toBeNull();
+  });
+
+  it("article_image_in_use protege una imagen referenciada", async () => {
+    const path = `tests/${Date.now()}-en-uso.jpg`;
+    const article = await seedArticle({ featured_image_path: path });
+
+    const inUse = await editor.rpc("article_image_in_use", { image_path: path });
+    expect(inUse.error).toBeNull();
+    expect(inUse.data).toBe(true);
+
+    // Al archivar sigue en uso: una archivada puede volver a publicarse.
+    await service.from("articles").update({ status: "archived" }).eq("id", article.id);
+    const stillInUse = await editor.rpc("article_image_in_use", { image_path: path });
+    expect(stillInUse.data).toBe(true);
+
+    // Y una key que nadie referencia queda libre.
+    const free = await editor.rpc("article_image_in_use", {
+      image_path: "tests/imagen-que-nadie-usa.jpg",
+    });
+    expect(free.data).toBe(false);
+  });
+});
+
+describe("perfiles: el rol no se auto-asigna", () => {
+  it("una editora no puede convertirse en admin", async () => {
+    await editor.from("profiles").update({ role: "admin" }).eq("id", editorUserId);
+
+    const { data } = await service
+      .from("profiles")
+      .select("role")
+      .eq("id", editorUserId)
+      .single();
+    expect(data?.role).toBe("editor");
+  });
+
+  it("el alta de un usuario crea su perfil con rol editor", async () => {
+    const email = `nuevo.${Date.now()}@killa.test`;
+    const id = await createUser(email, { display_name: "Nuevo" });
+
+    const { data } = await service.from("profiles").select("role, display_name").eq("id", id).single();
+    expect(data?.role).toBe("editor");
+    expect(data?.display_name).toBe("Nuevo");
+
+    await service.auth.admin.deleteUser(id);
+  });
+});

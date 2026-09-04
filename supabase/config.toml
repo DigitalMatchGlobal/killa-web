@@ -1,0 +1,35 @@
+# Configuración del proyecto Supabase de killa-web (versionada en el repo).
+# NO contiene secretos: solo ajustes públicos. Las claves (anon/publishable,
+# service_role, JWT secret) viven en variables de entorno, nunca acá.
+#
+# `project_id` queda con el nombre local hasta que exista el proyecto real en la
+# organización de DMG. Al crearlo se reemplaza por su ref y se corre
+# `supabase link --project-ref <ref>`.
+project_id = "killa-web"
+
+[db]
+major_version = 17
+
+[auth]
+# El panel editorial de Killa TV NO tiene alta pública: las cuentas de prensa
+# las crea un admin desde la consola de Supabase (o por Management API).
+# Dejar el registro abierto permitiría que cualquiera se auto-cree un perfil
+# con rol `editor` (ver el trigger `handle_new_user` en la migración 0001).
+enable_signup = false
+
+[auth.email]
+# OJO CON ESTA CLAVE: `auth.email.enable_signup` NO es "permitir registro por
+# email", es lo que enciende el PROVEEDOR de email en GoTrue
+# (GOTRUE_EXTERNAL_EMAIL_ENABLED). Ponerla en false deja el login roto con
+# "Email logins are disabled", que es justo lo contrario de lo que queremos.
+#
+# El registro público se apaga arriba, con `auth.enable_signup = false`
+# (GOTRUE_DISABLE_SIGNUP). El test de reglas verifica que un `signUp()` desde
+# el navegador sea rechazado.
+enable_signup = true
+# Login por email + contraseña, sin confirmación de correo: las cuentas las da
+# de alta un admin, así que no hay un email a verificar del lado del visitante.
+enable_confirmations = false
+
+[storage]
+enabled = true

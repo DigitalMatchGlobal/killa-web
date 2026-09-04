@@ -1,7 +1,9 @@
-# killa-web · Landing institucional (iteración 1)
+# killa-web · Landing institucional + Killa TV
 
-**Estado:** primera iteración de diseño, lista para mostrar. No aprobada, no publicada.
-**Última actualización:** 2026-08-30
+**Estado:** landing en primera iteración de diseño, lista para mostrar; **backend
+editorial de Killa TV implementado y verificado en local**. Nada aprobado, nada
+publicado, ningún proyecto Supabase real creado todavía.
+**Última actualización:** 2026-09-04
 
 Es la primera etapa del proyecto P3 del programa (web institucional + Killa TV).
 El resto del relevamiento vive en [`../docs/`](../docs/); la oferta comercial que
@@ -153,7 +155,7 @@ Marcados con `TODO(cliente)` en el código.
 | 3 | **Grafía oficial.** El logo usa `killa` en minúscula, el dominio es killa.com.ar y los docs internos escriben KILLA. Cerrarlo antes de producir nada más. | — |
 | 4 | **Lista definitiva de localidades.** Las 18 del mapa salen del material institucional compartido por Killa en redes. Hay que confirmarlas una por una antes de publicar. | [`lib/network.ts`](lib/network.ts) |
 | 5 | **Fotos reales del valle y del equipo técnico.** Es lo único que le falta a la página para dejar de ser sólo gráfica. | — |
-| 6 | Novedades / Killa TV con carga propia. | Doc 08 |
+| 6 | ~~Novedades / Killa TV con carga propia.~~ **Hecho**: el backend editorial está implementado. Falta crear el proyecto Supabase real y las cuentas del equipo de prensa. | [`docs/BACKEND-ETAPA-1.md`](docs/BACKEND-ETAPA-1.md) |
 
 Nada de esto bloquea mostrar la iteración: son datos, no desarrollo.
 
@@ -161,10 +163,47 @@ Nada de esto bloquea mostrar la iteración: son datos, no desarrollo.
 
 ## 6. Stack
 
-Next.js 16 (App Router) · React 19 · Tailwind 4 · lucide-react. Sin base de
-datos: la landing es 100% estática y se prerenderiza entera.
+Next.js 16 (App Router) · React 19 · Tailwind 4 · lucide-react · **Supabase**
+(Postgres + Auth + Storage) para Killa TV.
 
 Es deliberadamente el mismo stack de `GRUPO-LP` y `BPORT/opcion-a`, y **el mismo
 sobre el que se monta el portal de noticias del doc 08** — que necesita Next sí o
-sí para que las notas compartidas por WhatsApp salgan con foto y titular. Esta
-landing no se tira cuando llegue esa etapa: se le agregan rutas.
+sí para que las notas compartidas por WhatsApp salgan con foto y titular. La
+landing no se tiró al llegar esa etapa: se le agregaron rutas, como estaba
+previsto.
+
+La home institucional sigue siendo estática. Lo que usa base es Killa TV.
+
+---
+
+## 7. Killa TV: portal editorial (Etapa 1)
+
+El portal de noticias y su panel privado están implementados sobre Supabase.
+
+| Ruta | Qué es |
+|---|---|
+| `/tv` | Portada: destacada por prioridad editorial + últimas publicaciones |
+| `/tv/noticias/[slug]` | La nota, con Open Graph para WhatsApp y redes |
+| `/tv/categoria/[slug]` | Sección, con paginación |
+| `/tv/panel` | Panel privado del equipo de prensa (requiere sesión) |
+
+Para levantarlo en local:
+
+```bash
+npm run supabase:start        # stack local (necesita Docker)
+cp .env.example .env.local    # completar con lo que imprime `supabase status`
+npm run dev
+```
+
+Sin variables de entorno el portal **no se rompe**: cae al contenido estático de
+`lib/tv-news.ts` y avisa por consola. Es fallback de desarrollo, no de
+producción.
+
+- Configuración, migraciones y cómo crear el primer usuario: [`supabase/README.md`](supabase/README.md)
+- Decisiones, verificación y pendientes: [`docs/BACKEND-ETAPA-1.md`](docs/BACKEND-ETAPA-1.md)
+
+```bash
+npm run test         # reglas puras (ranking, saneamiento, validación)
+npm run test:rules   # RLS contra un Postgres real
+npm run test:e2e     # criterios de aceptación por HTTP
+```
