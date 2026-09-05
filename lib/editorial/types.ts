@@ -30,6 +30,7 @@ export type Article = {
   imageAlt: string;
   status: ArticleStatus;
   priority: ArticlePriority;
+  isFeatured: boolean;
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -95,6 +96,7 @@ export type ArticleRow = {
   image_alt: string | null;
   status: string;
   priority: number;
+  is_featured: boolean;
   author_id: string | null;
   updated_by: string | null;
   published_at: string | null;
@@ -160,6 +162,7 @@ export function mapArticle(row: ArticleRow, supabaseOrigin: string): Article {
     imageAlt: row.image_alt ?? "",
     status: isArticleStatus(row.status) ? row.status : "draft",
     priority: toPriority(row.priority),
+    isFeatured: row.is_featured,
     publishedAt: row.published_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

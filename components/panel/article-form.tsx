@@ -3,15 +3,37 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useActionState, useRef, useState, useTransition } from "react";
-import { AlertCircle, Check, Eye, Save, Upload } from "lucide-react";
+import {
+  AlertCircle,
+  Bold,
+  Check,
+  Eye,
+  Heading2,
+  ImagePlus,
+  Italic,
+  Link2,
+  List,
+  ListOrdered,
+  Quote,
+  Save,
+  Upload,
+} from "lucide-react";
 
+import { MarkdownContent } from "@/components/tv/markdown-content";
 import {
   createDraftAction,
   saveArticleAction,
   uploadFeaturedImageAction,
   type ActionResult,
 } from "@/lib/editorial/actions";
-import { EXCERPT_MAX, IMAGE_ALT_MAX, TITLE_MAX } from "@/lib/editorial/validation";
+import {
+  EXCERPT_MAX,
+  IMAGE_ALT_MAX,
+  IMAGE_MAX_BYTES,
+  IMAGE_MIN_WIDTH,
+  IMAGE_RECOMMENDED_BYTES,
+  TITLE_MAX,
+} from "@/lib/editorial/validation";
 import { resolveFeaturedImageUrl, type Category, type PanelArticle } from "@/lib/editorial/types";
 
 /**
@@ -45,11 +67,14 @@ export function ArticleForm({
   const [body, setBody] = useState(article?.body ?? "");
   const [categoryId, setCategoryId] = useState(article?.categoryId ?? categories[0]?.id ?? "");
   const [priority, setPriority] = useState(String(article?.priority ?? 1));
+  const [isFeatured, setIsFeatured] = useState(article?.isFeatured ?? false);
   const [imageAlt, setImageAlt] = useState(article?.imageAlt ?? "");
   const [imagePath, setImagePath] = useState(article?.featuredImagePath ?? "");
   const [imageError, setImageError] = useState<string | null>(null);
+  const [imageWarning, setImageWarning] = useState<string | null>(null);
   const [uploading, startUpload] = useTransition();
   const fileInput = useRef<HTMLInputElement>(null);
+  const bodyInput = useRef<HTMLTextAreaElement>(null);
 
   const imageUrl = resolveFeaturedImageUrl(imagePath || null, supabaseOrigin);
   const selectedCategory = categories.find((category) => category.id === categoryId);
@@ -57,6 +82,33 @@ export function ArticleForm({
   function handleFile(file: File | undefined) {
     if (!file) return;
     setImageError(null);
+    setImageWarning(null);
+
+    if (file.size > IMAGE_MAX_BYTES) {
+      setImageError("La imagen no puede pasar de 3 MB.");
+      if (fileInput.current) fileInput.current.value = "";
+      return;
+    }
+
+    const localUrl = URL.createObjectURL(file);
+    const probe = new window.Image();
+    probe.onload = () => {
+      const warnings: string[] = [];
+      if (file.size > IMAGE_RECOMMENDED_BYTES) {
+        warnings.push("pesa más de 2 MB");
+      }
+      if (probe.naturalWidth < IMAGE_MIN_WIDTH) {
+        warnings.push(`tiene ${probe.naturalWidth}px de ancho; recomendamos 1200px o más`);
+      }
+      setImageWarning(
+        warnings.length > 0
+          ? `La imagen se puede usar, pero ${warnings.join(" y ")}. Puede perder calidad o cargar más lento.`
+          : "Medidas correctas para portada y tarjetas.",
+      );
+      URL.revokeObjectURL(localUrl);
+    };
+    probe.onerror = () => URL.revokeObjectURL(localUrl);
+    probe.src = localUrl;
 
     startUpload(async () => {
       const payload = new FormData();
@@ -71,6 +123,34 @@ export function ArticleForm({
       }
     });
   }
+
+  function insertMarkdown(before: string, after: string, sample: string) {
+    const textarea = bodyInput.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = body.slice(start, end) || sample;
+    const next = `${body.slice(0, start)}${before}${selected}${after}${body.slice(end)}`;
+    setBody(next);
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const cursorStart = start + before.length;
+      textarea.setSelectionRange(cursorStart, cursorStart + selected.length);
+    });
+  }
+
+  const markdownTools = [
+    { label: "Negrita", icon: Bold, before: "**", after: "**", sample: "texto importante" },
+    { label: "Itálica", icon: Italic, before: "*", after: "*", sample: "texto" },
+    { label: "Título", icon: Heading2, before: "## ", after: "", sample: "Título de sección" },
+    { label: "Lista", icon: List, before: "- ", after: "", sample: "Elemento" },
+    { label: "Lista numerada", icon: ListOrdered, before: "1. ", after: "", sample: "Elemento" },
+    { label: "Enlace", icon: Link2, before: "[", after: "](https://)", sample: "texto del enlace" },
+    { label: "Imagen", icon: ImagePlus, before: "![", after: "](https://)", sample: "descripción" },
+    { label: "Cita", icon: Quote, before: "> ", after: "", sample: "Cita destacada" },
+  ] as const;
 
   return (
     <form action={formAction} className="mt-5 grid gap-5 lg:grid-cols-[1fr_0.72fr]">
@@ -87,7 +167,7 @@ export function ArticleForm({
               name="categoryId"
               value={categoryId}
               onChange={(event) => setCategoryId(event.target.value)}
-              className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-sm text-fg outline-none focus:border-sand"
+              className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
             >
               <option value="">Sin sección</option>
               {categories.map((category) => (
@@ -130,26 +210,47 @@ export function ArticleForm({
               onChange={(event) => setExcerpt(event.target.value)}
               maxLength={EXCERPT_MAX}
               rows={3}
-              className="w-full resize-none rounded-xl border border-line bg-midnight px-4 py-3 text-sm leading-relaxed text-fg outline-none focus:border-sand"
+              className="w-full resize-none rounded-xl border border-line bg-midnight px-4 py-3 text-base leading-relaxed text-fg outline-none focus:border-sand sm:text-sm"
             />
           </label>
 
-          <label className="grid gap-2">
-            <span className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
+          <div className="grid gap-2">
+            <label htmlFor="article-body" className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
               Cuerpo de la nota
-            </span>
+            </label>
+            <div className="flex flex-wrap gap-1.5 rounded-xl border border-line bg-surface/55 p-2" aria-label="Herramientas de formato Markdown">
+              {markdownTools.map(({ label, icon: Icon, before, after, sample }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => insertMarkdown(before, after, sample)}
+                  aria-label={label}
+                  title={label}
+                  className="grid size-10 place-items-center rounded-lg text-fg-muted transition-colors hover:bg-cyan/10 hover:text-cyan"
+                >
+                  <Icon size={17} aria-hidden />
+                </button>
+              ))}
+            </div>
             <textarea
+              ref={bodyInput}
+              id="article-body"
               name="body"
               value={body}
               onChange={(event) => setBody(event.target.value)}
               rows={14}
-              className="w-full rounded-xl border border-line bg-midnight px-4 py-3 text-sm leading-relaxed text-fg outline-none focus:border-sand"
+              className="w-full rounded-xl border border-line bg-midnight px-4 py-3 text-base leading-relaxed text-fg outline-none focus:border-sand sm:text-sm"
             />
             <span className="font-mono text-[0.55rem] leading-relaxed text-fg-faint">
-              Separá los párrafos con una línea en blanco. Es texto: no hace falta
-              (ni se admite) código HTML.
+              Podés usar formato Markdown. Si no lo conocés, usá los botones de arriba.
             </span>
-          </label>
+            <details className="rounded-xl border border-line bg-surface/35 p-4">
+              <summary className="cursor-pointer text-sm font-semibold text-fg">Vista previa del cuerpo</summary>
+              <div className="mt-4 border-t border-line pt-1">
+                <MarkdownContent body={body} compact />
+              </div>
+            </details>
+          </div>
 
           <label className="grid gap-2">
             <span className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
@@ -159,17 +260,33 @@ export function ArticleForm({
               name="priority"
               value={priority}
               onChange={(event) => setPriority(event.target.value)}
-              className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-sm text-fg outline-none focus:border-sand"
+              className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
             >
               <option value="1">1 — normal</option>
               <option value="2">2</option>
-              <option value="3">3 — destacar</option>
+              <option value="3">3 — importante</option>
               <option value="4">4</option>
-              <option value="5">5 — tapa</option>
+              <option value="5">5 — muy importante</option>
             </select>
             <span className="font-mono text-[0.55rem] leading-relaxed text-fg-faint">
-              La portada muestra la nota publicada de mayor prioridad. Si hay empate,
-              gana la más reciente.
+              Importancia editorial: 1 = normal · 5 = muy importante. Queda guardada
+              para ordenar contenidos en una etapa posterior.
+            </span>
+          </label>
+
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface/45 p-4">
+            <input
+              type="checkbox"
+              name="isFeatured"
+              checked={isFeatured}
+              onChange={(event) => setIsFeatured(event.target.checked)}
+              className="mt-1 size-4 accent-cyan"
+            />
+            <span>
+              <span className="block text-sm font-semibold text-fg">Mostrar como noticia destacada</span>
+              <span className="mt-1 block text-xs leading-relaxed text-fg-faint">
+                Ocupa el bloque principal de la portada. Al elegirla, la destacada anterior se desmarca automáticamente.
+              </span>
             </span>
           </label>
 
@@ -204,7 +321,7 @@ export function ArticleForm({
                       : "Elegir una imagen"}
                 </span>
                 <span className="mt-0.5 block truncate text-xs text-fg-faint">
-                  JPEG, PNG o WebP · hasta 5 MB
+                  JPG, PNG o WebP · ideal 1600×900 · máximo 3 MB
                 </span>
               </span>
             </label>
@@ -216,6 +333,12 @@ export function ArticleForm({
               >
                 <AlertCircle size={16} className="mt-0.5 shrink-0" aria-hidden />
                 {imageError}
+              </p>
+            ) : null}
+
+            {imageWarning ? (
+              <p className="mt-2 rounded-xl border border-cyan/25 bg-cyan/[0.06] px-4 py-3 text-sm text-fg-muted">
+                {imageWarning}
               </p>
             ) : null}
 
@@ -233,7 +356,7 @@ export function ArticleForm({
                 onChange={(event) => setImageAlt(event.target.value)}
                 maxLength={IMAGE_ALT_MAX}
                 placeholder="Qué se ve en la foto"
-                className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-sm text-fg outline-none focus:border-sand"
+                className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
               />
               <span className="font-mono text-[0.55rem] leading-relaxed text-fg-faint">
                 Obligatorio para publicar: es lo que leen los lectores de pantalla y lo

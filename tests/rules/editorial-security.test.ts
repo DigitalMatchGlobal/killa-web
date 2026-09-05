@@ -86,7 +86,7 @@ async function seedArticle(overrides: Record<string, unknown> = {}) {
       priority: 1,
       ...overrides,
     })
-    .select("id, slug, status, published_at, priority")
+    .select("id, slug, status, published_at, priority, is_featured")
     .single();
 
   if (error) throw new Error(`No se pudo sembrar la nota: ${error.message}`);
@@ -97,6 +97,7 @@ async function seedArticle(overrides: Record<string, unknown> = {}) {
     status: string;
     published_at: string | null;
     priority: number;
+    is_featured: boolean;
   };
 }
 
@@ -360,8 +361,8 @@ describe("criterio 3: el editor recorre el ciclo completo", () => {
 });
 
 describe("criterios 5 y 6: portada y orden cronológico, resueltos en SQL", () => {
-  it("la consulta de portada devuelve la de mayor prioridad y, en empate, la más reciente", async () => {
-    // Escenario aislado: se archiva todo lo demás para que el ranking sea
+  it("la destacada es manual y las últimas siguen orden cronológico", async () => {
+    // Escenario aislado: se archiva todo lo demás para que la selección sea
     // observable sin depender del seed.
     const { data: preexisting } = await service
       .from("articles")
@@ -382,14 +383,15 @@ describe("criterios 5 y 6: portada y orden cronológico, resueltos en SQL", () =
       priority: 1,
       published_at: "2026-09-01T10:00:00Z",
     });
-    const prioritariaVieja = await seedArticle({
+    const elegida = await seedArticle({
       status: "published",
       priority: 4,
       published_at: "2026-07-01T10:00:00Z",
+      is_featured: true,
     });
-    const prioritariaNueva = await seedArticle({
+    const importante = await seedArticle({
       status: "published",
-      priority: 4,
+      priority: 5,
       published_at: "2026-07-15T10:00:00Z",
     });
 
@@ -398,31 +400,45 @@ describe("criterios 5 y 6: portada y orden cronológico, resueltos en SQL", () =
       .from("articles")
       .select("id")
       .eq("status", "published")
-      .order("priority", { ascending: false })
+      .eq("is_featured", true)
       .order("published_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    expect(featured.data?.id).toBe(prioritariaNueva.id);
+    expect(featured.data?.id).toBe(elegida.id);
 
     // Y la de getLatestArticles(), excluyendo la destacada.
     const latest = await anon
       .from("articles")
       .select("id")
       .eq("status", "published")
-      .neq("id", prioritariaNueva.id)
+      .neq("id", elegida.id)
       .order("published_at", { ascending: false });
 
     expect(latest.data?.map((row) => row.id)).toEqual([
       reciente.id,
       vieja.id,
-      prioritariaVieja.id,
+      importante.id,
     ]);
 
     // Devolver el escenario a como estaba.
     if (parked.length > 0) {
       await service.from("articles").update({ status: "published" }).in("id", parked);
     }
+  });
+
+  it("marcar una nueva destacada desmarca la anterior", async () => {
+    const primera = await seedArticle({ is_featured: true });
+    const segunda = await seedArticle({ is_featured: true });
+
+    const { data, error } = await service
+      .from("articles")
+      .select("id, is_featured")
+      .in("id", [primera.id, segunda.id]);
+
+    expect(error).toBeNull();
+    expect(data?.find((row) => row.id === primera.id)?.is_featured).toBe(false);
+    expect(data?.find((row) => row.id === segunda.id)?.is_featured).toBe(true);
   });
 });
 
@@ -484,7 +500,7 @@ describe("criterio 4: imágenes", () => {
   // JPEG mínimo válido (firma + fin de imagen).
   const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0xff, 0xd9]);
 
-  it("el bucket sólo admite JPEG, PNG y WebP, hasta 5 MB", async () => {
+  it("el bucket sólo admite JPEG, PNG y WebP, hasta 3 MB", async () => {
     // Se consulta por la API de storage y no por PostgREST: `storage.buckets`
     // no está expuesta, y esta es además la vía que usa la app.
     const listed = await service.storage.listBuckets();
@@ -507,7 +523,7 @@ describe("criterio 4: imágenes", () => {
       "image/png",
       "image/webp",
     ]);
-    expect(raw.file_size_limit ?? raw.fileSizeLimit).toBe(5242880);
+    expect(raw.file_size_limit ?? raw.fileSizeLimit).toBe(3145728);
     // Lectura pública a propósito: las vistas previas sociales piden la imagen
     // sin sesión (ver la cabecera de la migración de storage).
     expect(raw.public).toBe(true);

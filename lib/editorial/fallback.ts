@@ -35,6 +35,7 @@ export const fallbackArticles: Article[] = tvNews.map((item, index) => ({
   imageAlt: item.imageAlt,
   status: "published",
   priority: 1,
+  isFeatured: index === 0,
   publishedAt: FALLBACK_DATES[index] ?? FALLBACK_DATES[0],
   createdAt: FALLBACK_DATES[index] ?? FALLBACK_DATES[0],
   updatedAt: FALLBACK_DATES[index] ?? FALLBACK_DATES[0],

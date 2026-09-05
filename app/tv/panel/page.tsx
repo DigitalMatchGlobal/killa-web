@@ -1,12 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Archive, ArrowLeft, ArrowRight, Edit3, Eye, FileText, Plus } from "lucide-react";
+import { Archive, ArrowLeft, ArrowRight, Edit3, Eye, FileText, Plus, Search, Star } from "lucide-react";
 
 import { PanelHeader } from "@/components/panel/panel-header";
 import { requireEditorialStaff } from "@/lib/editorial/auth";
 import { formatPanelDate, STATUS_LABELS } from "@/lib/editorial/format";
 import { getPanelCounts, listPanelArticles, PANEL_PAGE_SIZE } from "@/lib/editorial/panel";
 import { isArticleStatus, type ArticleStatus } from "@/lib/editorial/types";
+import { getCategories } from "@/lib/editorial/queries";
 
 /**
  * Tablero del panel: contadores, filtro por estado y el listado paginado de
@@ -27,7 +28,7 @@ const FILTERS: { value: ArticleStatus | "all"; label: string }[] = [
 export default async function EditorialPanelPage({
   searchParams,
 }: {
-  searchParams: Promise<{ estado?: string; pagina?: string }>;
+  searchParams: Promise<{ estado?: string; categoria?: string; q?: string; pagina?: string }>;
 }) {
   const profile = await requireEditorialStaff();
   const query = await searchParams;
@@ -35,14 +36,24 @@ export default async function EditorialPanelPage({
   const status = isArticleStatus(query.estado ?? "") ? (query.estado as ArticleStatus) : "all";
   const parsedPage = Number.parseInt(query.pagina ?? "1", 10);
   const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const categoryId = query.categoria?.trim() || null;
+  const search = query.q?.trim().slice(0, 80) || null;
 
-  const [counts, result] = await Promise.all([
+  const [counts, result, categories] = await Promise.all([
     getPanelCounts(),
-    listPanelArticles({ status, page, pageSize: PANEL_PAGE_SIZE }),
+    listPanelArticles({ status, categoryId, search, page, pageSize: PANEL_PAGE_SIZE }),
+    getCategories(),
   ]);
 
-  const filterHref = (value: ArticleStatus | "all") =>
-    value === "all" ? "/tv/panel" : `/tv/panel?estado=${value}`;
+  const filterHref = (value: ArticleStatus | "all", targetPage?: number) => {
+    const params = new URLSearchParams();
+    if (value !== "all") params.set("estado", value);
+    if (categoryId) params.set("categoria", categoryId);
+    if (search) params.set("q", search);
+    if (targetPage && targetPage > 1) params.set("pagina", String(targetPage));
+    const suffix = params.toString();
+    return suffix ? `/tv/panel?${suffix}` : "/tv/panel";
+  };
 
   return (
     <>
@@ -101,6 +112,35 @@ export default async function EditorialPanelPage({
           ))}
         </nav>
 
+        <form method="get" className="mt-4 grid gap-2 rounded-2xl border border-line bg-surface/35 p-3 sm:grid-cols-[minmax(0,1fr)_15rem_auto]">
+          {status !== "all" ? <input type="hidden" name="estado" value={status} /> : null}
+          <label className="relative">
+            <span className="sr-only">Buscar por título</span>
+            <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-faint" aria-hidden />
+            <input
+              type="search"
+              name="q"
+              defaultValue={search ?? ""}
+              placeholder="Buscar por título"
+              className="min-h-11 w-full rounded-xl border border-line bg-midnight pl-10 pr-4 text-base text-fg outline-none placeholder:text-fg-faint focus:border-cyan"
+            />
+          </label>
+          <label>
+            <span className="sr-only">Filtrar por categoría</span>
+            <select
+              name="categoria"
+              defaultValue={categoryId ?? ""}
+              className="min-h-11 w-full rounded-xl border border-line bg-midnight px-3 text-sm text-fg outline-none focus:border-cyan"
+            >
+              <option value="">Todas las categorías</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>{category.name}</option>
+              ))}
+            </select>
+          </label>
+          <button type="submit" className="btn bg-cyan px-5 text-midnight hover:bg-cyan-bright">Filtrar</button>
+        </form>
+
         <section className="mt-6 overflow-hidden rounded-2xl border border-line bg-midnight/60">
           <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
             <h2 className="font-display text-sm font-semibold">Publicaciones</h2>
@@ -155,6 +195,9 @@ export default async function EditorialPanelPage({
                       {article.priority > 1 ? (
                         <span className="text-fg-faint">prioridad {article.priority}</span>
                       ) : null}
+                      {article.isFeatured ? (
+                        <span className="inline-flex items-center gap-1 text-sand"><Star size={11} fill="currentColor" aria-hidden /> Destacada</span>
+                      ) : null}
                     </p>
                     <h3 className="mt-1 line-clamp-2 font-display text-sm font-semibold sm:text-base">
                       {article.title}
@@ -196,7 +239,7 @@ export default async function EditorialPanelPage({
           >
             {result.page > 1 ? (
               <Link
-                href={`${filterHref(status)}${status === "all" ? "?" : "&"}pagina=${result.page - 1}`}
+                href={filterHref(status, result.page - 1)}
                 className="btn btn-ghost"
               >
                 <ArrowLeft size={15} aria-hidden />
@@ -210,7 +253,7 @@ export default async function EditorialPanelPage({
             </span>
             {result.page < result.pageCount ? (
               <Link
-                href={`${filterHref(status)}${status === "all" ? "?" : "&"}pagina=${result.page + 1}`}
+                href={filterHref(status, result.page + 1)}
                 className="btn btn-ghost"
               >
                 Siguientes

@@ -53,12 +53,10 @@ URL firmada expira y la tarjeta se rompe. La protección está donde importa —
 subir, reemplazar y borrar sólo el staff editorial, por RLS. Una foto de prensa
 ya publicada no es información sensible.
 
-**El cuerpo de la nota se guarda como texto plano, no como HTML.** Se renderiza
-con `<p>{parrafo}</p>`, que React escapa siempre: no hay `dangerouslySetInnerHTML`
-en ningún lado, así que el vector de XSS no existe en vez de depender de que un
-sanitizador esté bien configurado. Igual se limpian etiquetas en la escritura,
-para no dejar basura guardada. Un editor de texto enriquecido es decisión de la
-Etapa 2, si lo piden.
+**El cuerpo de la nota se guarda como Markdown, nunca como HTML generado.** Se
+renderiza con `react-markdown`, sin habilitar HTML crudo, y las etiquetas que
+alguien pegue se limpian antes de guardar. El equipo dispone de toolbar y vista
+previa; la nota pública y el panel comparten el mismo render seguro.
 
 **Nada de la app usa `service_role`.** Todas las escrituras van con la sesión
 del editor, así que las RLS son la última palabra incluso si esta capa tuviera
@@ -172,8 +170,9 @@ usuarios y escriben notas.
 4. **Sube una imagen válida y se rechazan las inválidas** — tres rejas: Zod,
    firma real del archivo (magic bytes) y el propio bucket. Un HTML renombrado a
    `.jpg` con `Content-Type: image/jpeg` se rechaza.
-5. **La prioridad determina la portada** — con la consulta real: prioridad más
-   alta primero, empate por fecha, y sin prioridades especiales gana la última.
+5. **La destacada se elige manualmente** — `is_featured` garantiza una sola;
+   si todavía no eligieron ninguna, la portada usa la publicación más reciente.
+   `priority` queda guardada para una etapa posterior y no altera la tapa.
 6. **Las últimas noticias van en orden cronológico** y sin la destacada.
 7. **Datos listos para SEO y previews sociales** — `generateMetadata` con
    canonical, Open Graph (imagen, `publishedTime`, `section`) y Twitter card;
@@ -186,7 +185,7 @@ usuarios y escriben notas.
 
 **Hecho el 2026-09-04 sobre el proyecto real:**
 
-- Las 4 migraciones aplicadas y registradas en
+- Las primeras 5 migraciones aplicadas y registradas en
   `supabase_migrations.schema_migrations`. Se aplicaron por **Management API**
   con el PAT, porque la contraseña de la base no estaba disponible; el proyecto
   estaba completamente vacío (0 tablas, 0 buckets, 0 usuarios) antes de tocarlo.
@@ -202,11 +201,13 @@ usuarios y escriben notas.
 
 **Falta para poner el sitio en producción:**
 
-1. **Crear las cuentas del equipo de prensa** (Authentication → Add user, con
+1. **Aplicar `20260905120000`** antes de desplegar el frontend actualizado:
+   agrega la destacada manual y reduce el techo del bucket a 3 MB.
+2. **Crear las cuentas del equipo de prensa** (Authentication → Add user, con
    "Auto Confirm User") y decidir quién es `admin`:
    `update public.profiles set role = 'admin' where id = '<uuid>';`
    No lo hice: son datos de personas reales y no me los pasaste.
-2. **Cargar las dos variables en Vercel** (`NEXT_PUBLIC_SUPABASE_URL` y
+3. **Cargar las dos variables en Vercel** (`NEXT_PUBLIC_SUPABASE_URL` y
    `NEXT_PUBLIC_SUPABASE_ANON_KEY`) y desplegar. Sin autorización explícita no
    toqué Vercel ni pushee la rama.
 3. ⚠️ **Confirmar el plan de la organización** `swwsxexyzvbnzoqwzjgd`. El PAT no
@@ -252,6 +253,7 @@ supabase/migrations/20260904120100_etapa1_editorial_storage.sql
 supabase/migrations/20260904120200_etapa1_editorial_seed.sql
 supabase/migrations/20260904150000_etapa1_privilegios_minimos.sql
 supabase/migrations/20260904160000_etapa1_rol_admin_explicito.sql
+supabase/migrations/20260905120000_etapa1_destacada_manual_e_imagenes.sql
 
 lib/supabase/env.ts                     lib/editorial/types.ts
 lib/supabase/server.ts                  lib/editorial/queries.ts
@@ -260,6 +262,8 @@ proxy.ts                                lib/editorial/actions.ts
                                         lib/editorial/auth.ts
 components/tv/article-view.tsx          lib/editorial/validation.ts
 components/tv/article-card.tsx          lib/editorial/sanitize.ts
+components/tv/markdown-content.tsx
+components/tv/share-actions.tsx
 components/panel/panel-header.tsx       lib/editorial/ranking.ts
 components/panel/login-form.tsx         lib/editorial/format.ts
 components/panel/article-form.tsx       lib/editorial/fallback.ts
@@ -283,8 +287,8 @@ tools/verificacion-e2e.mjs              docs/BACKEND-ETAPA-1.md
 | Archivo | Cambio |
 |---|---|
 | `app/tv/page.tsx` | Portada desde la base (destacada + últimas + secciones reales). Se cambió el cartel "Mockup editorial" y el botón "Ver mockup del panel", que ya no eran ciertos |
-| `app/tv/noticias/[slug]/page.tsx` | Lee de la base, 404 si no está publicada, metadata de OG completa; el cuerpo se movió a `ArticleView` |
-| `app/tv/panel/page.tsx` | De maqueta con `useState` a panel real con sesión, contadores, filtros y paginación |
+| `app/tv/noticias/[slug]/page.tsx` | Lee de la base, 404 si no está publicada, metadata de OG completa, compartir y otras noticias |
+| `app/tv/panel/page.tsx` | Panel real con sesión, contadores, búsqueda, filtro por categoría/estado y paginación |
 | `next.config.ts` | `images.remotePatterns` para el bucket, derivado de `NEXT_PUBLIC_SUPABASE_URL` |
 | `package.json` | `@supabase/ssr`, `@supabase/supabase-js`, `zod`, `vitest`; scripts de test y de Supabase; `@types/node` a `^22` (lo que pedía vitest y lo que corre la máquina) |
 

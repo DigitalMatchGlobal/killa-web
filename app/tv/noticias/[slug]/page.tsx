@@ -4,9 +4,10 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { Logo } from "@/components/brand/logo";
+import { ArticleCard } from "@/components/tv/article-card";
 import { ArticleView } from "@/components/tv/article-view";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { getArticleBySlug, getPublishedSlugs } from "@/lib/editorial/queries";
+import { getArticleBySlug, getLatestArticles, getPublishedSlugs } from "@/lib/editorial/queries";
 
 /**
  * Nota pública. Sale de la base con la clave anónima, así que la RLS garantiza
@@ -69,6 +70,7 @@ export default async function TvNewsDetail({
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
+  const related = await getLatestArticles({ pageSize: 3, excludeId: article.id });
 
   return (
     <div className="min-h-screen bg-midnight text-fg">
@@ -92,6 +94,22 @@ export default async function TvNewsDetail({
 
       <main>
         <ArticleView article={article} />
+        {related.items.length > 0 ? (
+          <section className="border-t border-line bg-night/35">
+            <div className="shell py-10 sm:py-14">
+              <div className="flex items-end justify-between gap-4 border-b border-line pb-4">
+                <div>
+                  <p className="font-mono text-xs uppercase tracking-[0.15em] text-sand">Seguir leyendo</p>
+                  <h2 className="mt-2 font-display text-2xl font-bold tracking-tight sm:text-3xl">Otras noticias</h2>
+                </div>
+                <Link href="/tv" className="text-sm font-semibold text-fg-muted hover:text-sand">Ver portada</Link>
+              </div>
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                {related.items.map((item) => <ArticleCard key={item.id} article={item} />)}
+              </div>
+            </div>
+          </section>
+        ) : null}
       </main>
     </div>
   );

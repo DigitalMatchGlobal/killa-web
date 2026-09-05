@@ -29,6 +29,7 @@ function article(overrides: Partial<Article> & { id: string }): Article {
     imageAlt: "",
     status: overrides.status ?? "published",
     priority: overrides.priority ?? 1,
+    isFeatured: overrides.isFeatured ?? false,
     publishedAt: overrides.publishedAt ?? "2026-08-30T12:00:00Z",
     createdAt: "2026-08-30T12:00:00Z",
     updatedAt: "2026-08-30T12:00:00Z",
@@ -36,20 +37,20 @@ function article(overrides: Partial<Article> & { id: string }): Article {
   };
 }
 
-describe("portada: prioridad y fecha", () => {
-  it("la prioridad más alta gana sobre la más reciente", () => {
+describe("portada: destacada manual y fecha", () => {
+  it("la selección manual gana sobre una noticia más reciente", () => {
     const featured = pickFeatured([
       article({ id: "reciente", priority: 1, publishedAt: "2026-09-01T10:00:00Z" }),
-      article({ id: "prioritaria", priority: 4, publishedAt: "2026-08-01T10:00:00Z" }),
+      article({ id: "elegida", isFeatured: true, publishedAt: "2026-08-01T10:00:00Z" }),
     ]);
 
-    expect(featured?.id).toBe("prioritaria");
+    expect(featured?.id).toBe("elegida");
   });
 
-  it("en empate de prioridad gana la publicación más reciente", () => {
+  it("si hubiera dos marcadas, gana la publicación más reciente", () => {
     const featured = pickFeatured([
-      article({ id: "vieja", priority: 3, publishedAt: "2026-08-01T10:00:00Z" }),
-      article({ id: "nueva", priority: 3, publishedAt: "2026-09-01T10:00:00Z" }),
+      article({ id: "vieja", isFeatured: true, publishedAt: "2026-08-01T10:00:00Z" }),
+      article({ id: "nueva", isFeatured: true, publishedAt: "2026-09-01T10:00:00Z" }),
     ]);
 
     expect(featured?.id).toBe("nueva");
@@ -67,8 +68,8 @@ describe("portada: prioridad y fecha", () => {
 
   it("ignora borradores y archivadas", () => {
     const featured = pickFeatured([
-      article({ id: "borrador", status: "draft", priority: 5 }),
-      article({ id: "archivada", status: "archived", priority: 5 }),
+      article({ id: "borrador", status: "draft", isFeatured: true }),
+      article({ id: "archivada", status: "archived", isFeatured: true }),
       article({ id: "publicada", status: "published", priority: 1 }),
     ]);
 
@@ -91,7 +92,7 @@ describe("últimas publicaciones", () => {
   it("van en orden cronológico descendente y sin la destacada", () => {
     const all = [
       article({ id: "vieja", publishedAt: "2026-07-01T10:00:00Z" }),
-      article({ id: "destacada", priority: 5, publishedAt: "2026-06-01T10:00:00Z" }),
+      article({ id: "destacada", isFeatured: true, publishedAt: "2026-06-01T10:00:00Z" }),
       article({ id: "nueva", publishedAt: "2026-09-01T10:00:00Z" }),
       article({ id: "media", publishedAt: "2026-08-01T10:00:00Z" }),
     ];
@@ -146,6 +147,7 @@ describe("requisitos para publicar", () => {
     imageAlt: "Antena de Killa en el cerro",
     featuredImagePath: "2026/09/foto.jpg",
     priority: 3,
+    isFeatured: false,
     slug: null,
   };
 
@@ -257,6 +259,7 @@ describe("mapeo al contrato público", () => {
         image_alt: null,
         status: "published",
         priority: 2,
+        is_featured: false,
         author_id: null,
         updated_by: null,
         published_at: "2026-09-01T10:00:00Z",
@@ -285,6 +288,7 @@ describe("mapeo al contrato público", () => {
         image_alt: null,
         status: "published",
         priority: 1,
+        is_featured: false,
         author_id: null,
         updated_by: null,
         published_at: null,

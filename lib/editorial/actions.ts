@@ -106,6 +106,7 @@ function readDraftForm(formData: FormData) {
     imageAlt: formString(formData, "imageAlt"),
     featuredImagePath: formString(formData, "featuredImagePath"),
     priority: formString(formData, "priority") || "1",
+    isFeatured: formString(formData, "isFeatured"),
     slug: formString(formData, "slug"),
   });
 }
@@ -139,6 +140,7 @@ export async function createDraftAction(
       featured_image_path: input.featuredImagePath,
       image_alt: input.imageAlt,
       priority: input.priority,
+      is_featured: input.isFeatured,
       status: "draft" satisfies ArticleStatus,
     })
     .select("id")
@@ -185,6 +187,7 @@ export async function saveArticleAction(
       featured_image_path: input.featuredImagePath,
       image_alt: input.imageAlt,
       priority: input.priority,
+      is_featured: input.isFeatured,
       // El slug de una nota publicada NO se cambia: los links compartidos por
       // WhatsApp dejarían de funcionar. Sólo se reescribe si sigue en borrador.
       ...(current.status === "published" ? {} : { slug: input.slug ?? input.title }),
@@ -220,6 +223,7 @@ export async function publishArticleAction(
     imageAlt: current.imageAlt,
     featuredImagePath: current.featuredImagePath,
     priority: current.priority,
+    isFeatured: current.isFeatured,
     slug: current.slug,
   });
   if (!parsed.success) return fail(firstIssue(parsed.error));
@@ -323,7 +327,7 @@ export async function uploadFeaturedImageAction(
   if (!parsed.success) return fail(firstIssue(parsed.error));
 
   const buffer = new Uint8Array(await file.arrayBuffer());
-  if (buffer.byteLength > IMAGE_MAX_BYTES) return fail("La imagen no puede pasar de 5 MB.");
+  if (buffer.byteLength > IMAGE_MAX_BYTES) return fail("La imagen no puede pasar de 3 MB.");
 
   const sniffed = sniffImageMime(buffer);
   if (!sniffed) {

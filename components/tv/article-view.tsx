@@ -2,9 +2,10 @@ import Image from "next/image";
 import { CalendarDays, Share2 } from "lucide-react";
 
 import { formatArticleDate } from "@/lib/editorial/format";
-import { toParagraphs } from "@/lib/editorial/sanitize";
 import type { Article } from "@/lib/editorial/types";
 import { site } from "@/lib/site";
+import { MarkdownContent } from "./markdown-content";
+import { CopyLinkButton } from "./share-actions";
 
 /**
  * Cuerpo de una nota. Lo comparten la página pública y la vista previa del
@@ -23,11 +24,13 @@ export function ArticleView({
   isPreview?: boolean;
 }) {
   const canonicalPath = `/tv/noticias/${article.slug}`;
+  const canonicalUrl = `${site.url}${canonicalPath}`;
   const shareText = encodeURIComponent(
     `${article.title} - Killa TV\n${site.url}${canonicalPath}`,
   );
+  const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(canonicalUrl)}`;
+  const xUrl = `https://x.com/intent/post?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(canonicalUrl)}`;
   const publishedLabel = formatArticleDate(article.publishedAt);
-  const paragraphs = toParagraphs(article.body);
 
   return (
     <article className="shell py-10 sm:py-16">
@@ -72,12 +75,8 @@ export function ArticleView({
         )}
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_auto]">
-          <div className="max-w-[68ch] space-y-5 text-[1.05rem] leading-8 text-fg-muted">
-            {paragraphs.length > 0 ? (
-              paragraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)
-            ) : (
-              <p className="text-fg-faint">El cuerpo de la nota está vacío.</p>
-            )}
+          <div className="max-w-[68ch]">
+            <MarkdownContent body={article.body} />
           </div>
 
           {isPreview ? null : (
@@ -95,6 +94,25 @@ export function ArticleView({
                   <Share2 size={15} aria-hidden />
                   WhatsApp
                 </a>
+                <a
+                  href={facebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-line px-4 text-sm text-fg-muted hover:border-cyan/60 hover:text-fg"
+                >
+                  <span className="font-serif font-bold" aria-hidden>f</span>
+                  Facebook
+                </a>
+                <a
+                  href={xUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-line px-4 text-sm text-fg-muted hover:border-cyan/60 hover:text-fg"
+                >
+                  <span className="font-semibold" aria-hidden>X</span>
+                  X / Twitter
+                </a>
+                <CopyLinkButton url={canonicalUrl} />
               </div>
             </aside>
           )}

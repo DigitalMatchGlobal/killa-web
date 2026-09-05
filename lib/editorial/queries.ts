@@ -30,7 +30,7 @@ import {
 
 const ARTICLE_COLUMNS = `
   id, title, slug, excerpt, body, category_id, featured_image_path, image_alt,
-  status, priority, author_id, updated_by, published_at, created_at, updated_at,
+  status, priority, is_featured, author_id, updated_by, published_at, created_at, updated_at,
   category:categories ( name, slug )
 `;
 
@@ -44,7 +44,7 @@ const ARTICLE_COLUMNS = `
  */
 const ARTICLE_COLUMNS_CATEGORY_INNER = `
   id, title, slug, excerpt, body, category_id, featured_image_path, image_alt,
-  status, priority, author_id, updated_by, published_at, created_at, updated_at,
+  status, priority, is_featured, author_id, updated_by, published_at, created_at, updated_at,
   category:categories!inner ( name, slug )
 `;
 
@@ -72,17 +72,34 @@ export async function getFeaturedArticle(): Promise<Article | null> {
   }
 
   const supabase = createSupabasePublicClient();
-  const { data, error } = await supabase
+  const { data: featured, error: featuredError } = await supabase
     .from("articles")
     .select(ARTICLE_COLUMNS)
     .eq("status", "published")
-    .order("priority", { ascending: false })
+    .eq("is_featured", true)
     .order("published_at", { ascending: false })
     .limit(1)
     .maybeSingle<ArticleRow>();
 
-  if (error) throw new Error(`No se pudo leer la noticia destacada: ${error.message}`);
-  return data ? mapArticle(data, supabaseUrl()) : null;
+  if (featuredError) {
+    throw new Error(`No se pudo leer la noticia destacada: ${featuredError.message}`);
+  }
+  if (featured) return mapArticle(featured, supabaseUrl());
+
+  // Si el equipo todavía no eligió una destacada, la tapa no queda vacía:
+  // toma la publicación más reciente sin convertir prioridad en una regla oculta.
+  const { data: latest, error: latestError } = await supabase
+    .from("articles")
+    .select(ARTICLE_COLUMNS)
+    .eq("status", "published")
+    .order("published_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<ArticleRow>();
+
+  if (latestError) {
+    throw new Error(`No se pudo leer la última noticia: ${latestError.message}`);
+  }
+  return latest ? mapArticle(latest, supabaseUrl()) : null;
 }
 
 /**

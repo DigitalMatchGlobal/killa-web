@@ -10,11 +10,13 @@ import { sanitizeBody, sanitizeSingleLine } from "./sanitize";
  * siempre: sanear primero, validar después — así el largo mínimo se mide sobre
  * el texto real y no sobre etiquetas HTML que después se van a descartar.
  *
- * Los límites de imagen (5 MB, JPEG/PNG/WebP) están además declarados en el
+ * Los límites de imagen (3 MB, JPEG/PNG/WebP) están además declarados en el
  * bucket (supabase/migrations/...storage.sql): son dos rejas, no una sola.
  */
 
-export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+export const IMAGE_RECOMMENDED_BYTES = 2 * 1024 * 1024;
+export const IMAGE_MAX_BYTES = 3 * 1024 * 1024;
+export const IMAGE_MIN_WIDTH = 1200;
 export const IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 export const IMAGE_EXTENSIONS: Record<(typeof IMAGE_MIME_TYPES)[number], string> = {
   "image/jpeg": "jpg",
@@ -62,6 +64,10 @@ export const articleDraftSchema = z.object({
     .int("La prioridad es un número entero.")
     .min(1, "La prioridad va de 1 a 5.")
     .max(5, "La prioridad va de 1 a 5."),
+  isFeatured: z.preprocess(
+    (value) => value === "on" || value === "true" || value === true,
+    z.boolean(),
+  ),
   /** Slug opcional: si no viene, lo deriva del título el trigger de la base. */
   slug: z.preprocess(
     (value) => (value === "" || value === undefined ? null : value),
@@ -105,7 +111,7 @@ export const imageUploadSchema = z.object({
   size: z
     .number()
     .positive("El archivo está vacío.")
-    .max(IMAGE_MAX_BYTES, "La imagen no puede pasar de 5 MB."),
+    .max(IMAGE_MAX_BYTES, "La imagen no puede pasar de 3 MB."),
   type: z.enum(IMAGE_MIME_TYPES, {
     message: "Formato no admitido. Se aceptan JPEG, PNG y WebP.",
   }),

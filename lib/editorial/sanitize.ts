@@ -1,15 +1,12 @@
 /**
  * Saneamiento del contenido editorial.
  *
- * DECISIÓN: el cuerpo de una nota se guarda como **texto plano** con párrafos
- * separados por línea en blanco, no como HTML.
+ * DECISIÓN: el cuerpo de una nota se guarda como **Markdown puro**, nunca como
+ * HTML generado.
  *
- * Por qué: el equipo de prensa de Killa escribe notas, no markup. Guardar texto
- * y renderizarlo con `<p>{parrafo}</p>` hace que React escape todo por
- * definición, así que no queda superficie de XSS que haya que confiar en
- * limpiar bien: el vector directamente no existe. Un editor de texto
- * enriquecido con su propio sanitizador es una decisión de la Etapa 2, cuando
- * se sepa si lo piden.
+ * El render usa `react-markdown` sin HTML crudo. Esta limpieza elimina HTML
+ * pegado desde Word o enviado por API, pero preserva la sintaxis Markdown que
+ * el editor ofrece mediante su toolbar.
  *
  * Igual se limpia en la escritura: si alguien pega HTML desde Word o manda un
  * payload por la API, se guarda el texto sin etiquetas en vez de dejar basura

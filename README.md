@@ -182,7 +182,7 @@ El portal de noticias y su panel privado están implementados sobre Supabase.
 
 | Ruta | Qué es |
 |---|---|
-| `/tv` | Portada: destacada por prioridad editorial + últimas publicaciones |
+| `/tv` | Portada: destacada manual + últimas publicaciones |
 | `/tv/noticias/[slug]` | La nota, con Open Graph para WhatsApp y redes |
 | `/tv/categoria/[slug]` | Sección, con paginación |
 | `/tv/panel` | Panel privado del equipo de prensa (requiere sesión) |
@@ -203,7 +203,7 @@ producción.
 - Decisiones, verificación y pendientes: [`docs/BACKEND-ETAPA-1.md`](docs/BACKEND-ETAPA-1.md)
 
 ```bash
-npm run test         # reglas puras (ranking, saneamiento, validación)
+npm run test         # reglas puras (destacada, saneamiento, validación)
 npm run test:rules   # RLS contra un Postgres real
 npm run test:e2e     # criterios de aceptación por HTTP
 ```

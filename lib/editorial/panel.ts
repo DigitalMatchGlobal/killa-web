@@ -29,7 +29,7 @@ import {
 
 const PANEL_COLUMNS = `
   id, title, slug, excerpt, body, category_id, featured_image_path, image_alt,
-  status, priority, author_id, updated_by, published_at, created_at, updated_at,
+  status, priority, is_featured, author_id, updated_by, published_at, created_at, updated_at,
   category:categories ( name, slug ),
   author:profiles!articles_author_id_fkey ( display_name )
 `;
