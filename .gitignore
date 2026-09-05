@@ -8,3 +8,7 @@ next-env.d.ts
 .env*
 !.env.example
 .vercel
+
+# Artefactos locales de la CLI de Supabase (no son configuración del proyecto).
+supabase/.branches/
+supabase/.temp/

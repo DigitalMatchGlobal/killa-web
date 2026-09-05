@@ -101,7 +101,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es-AR" className={`${sora.variable} ${inter.variable} ${mono.variable}`}>
+    <html
+      lang="es-AR"
+      suppressHydrationWarning
+      className={`${sora.variable} ${inter.variable} ${mono.variable}`}
+    >
       <head>
         {/* Se ejecuta antes del primer render para evitar un destello del tema incorrecto. */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

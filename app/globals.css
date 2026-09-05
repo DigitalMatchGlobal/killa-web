@@ -12,9 +12,7 @@
  * caen a `currentColor` y el sitio pierde todos los colores sin dar un solo
  * error. En v4 la opacidad (`bg-cyan/12`) la resuelve Tailwind con color-mix().
  *
- * Paleta: el logotipo de Killa es blanco sobre transparente y el
- * isotipo va de cian a gris. Eso obliga a fondo oscuro. El cian
- * #00BCE8 es el color de marca tal cual está hoy en killa.com.ar.
+ * Paleta oficial entregada por Killa: #26B9E8, #0082A3 y #CCCECE.
  * El arena es un acento territorial (los Valles) y se usa en dosis
  * mínimas: la luz de luna del hero y Killa TV. "Killa" es luna en
  * quechua; el resplandor cálido del hero es eso, no un degradado.
@@ -27,9 +25,10 @@
   --surface-2: 19 36 63;
 
   /* marca */
-  --cyan: 0 188 232;
+  --cyan: 38 185 232;
   --cyan-bright: 90 226 255;
-  --cyan-deep: 0 122 160;
+  --cyan-deep: 0 130 163;
+  --brand-gray: 204 206 206;
   --sand: 233 208 160;
   --moon-light: 250 242 214;
   --moon-mid: 233 208 160;
@@ -63,7 +62,7 @@
   --surface: 255 255 255;
   --surface-2: 222 233 243;
 
-  --cyan: 0 151 197;
+  --cyan: 0 130 163;
   --cyan-bright: 0 112 156;
   --cyan-deep: 0 102 145;
   --sand: 151 116 54;
@@ -150,10 +149,20 @@ body {
   transform: translate(-50%, -50%) rotate(0deg) scale(1);
 }
 
-/* El PNG institucional tiene lettering blanco; en claro pasa a monocromo tinta. */
-:root[data-theme="light"] .brand-logo {
-  filter: brightness(0) saturate(100%);
-  opacity: 0.9;
+.brand-logo-light { display: none; }
+:root[data-theme="light"] .brand-logo-dark { display: none; }
+:root[data-theme="light"] .brand-logo-light { display: block; }
+
+/* El PNG oficial de Killa TV viene sobre blanco. El modo de mezcla integra
+ * ese fondo a cada tema y conserva cian + blanco/negro sin recrear la marca. */
+.tv-logo-image {
+  filter: invert(1) hue-rotate(180deg);
+  mix-blend-mode: screen;
+}
+
+:root[data-theme="light"] .tv-logo-image {
+  filter: none;
+  mix-blend-mode: multiply;
 }
 
 .hero-frame {

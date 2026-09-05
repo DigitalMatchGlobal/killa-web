@@ -3,20 +3,29 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 /**
- * Logotipo original de Killa (tomado de killa.com.ar). Es blanco sobre
- * transparente: sólo funciona sobre fondo oscuro, y esa es una de las razones
- * por las que todo el sitio es oscuro.
- * TODO(cliente): pedir el archivo vectorial (SVG/AI). Hoy es un PNG de 2160 px.
+ * Logotipo oficial provisto por Killa. La variante de color con lettering
+ * negro se usa en claro; la variante blanca existente conserva legibilidad en
+ * oscuro. Ambas comparten exactamente el mismo espacio para evitar saltos.
  */
 export function Logo({ className, priority }: { className?: string; priority?: boolean }) {
   return (
-    <Image
-      src="/brand/killa-internet.png"
-      alt="Killa Internet"
-      width={2160}
-      height={825}
-      priority={priority}
-      className={cn("brand-logo h-9 w-auto sm:h-10", className)}
-    />
+    <span className={cn("relative block h-9 w-[7.9rem] sm:h-10 sm:w-[8.8rem]", className)}>
+      <Image
+        src="/brand/killa-internet.png"
+        alt="Killa Internet"
+        width={2160}
+        height={825}
+        priority={priority}
+        className="brand-logo-dark absolute inset-0 h-full w-full object-contain"
+      />
+      <Image
+        src="/brand/killa-official.png"
+        alt=""
+        width={1600}
+        height={533}
+        priority={priority}
+        className="brand-logo-light absolute inset-0 hidden h-full w-full object-contain"
+      />
+    </span>
   );
 }
