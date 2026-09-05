@@ -1,6 +1,7 @@
 import { Mail, MessageCircle, Phone } from "lucide-react";
 
 import { Logo } from "@/components/brand/logo";
+import { PoweredBy } from "@/components/brand/powered-by";
 import { navLinks, offices, site, whatsappLink } from "@/lib/site";
 
 /**
@@ -113,11 +114,14 @@ export function Contact() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col gap-3 border-t border-line pt-7 font-mono text-xs text-fg-faint sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            © {new Date().getFullYear()} {site.legalName}
-          </p>
-          <p>Jujuy · Salta · Tucumán · Catamarca, Argentina</p>
+        <div className="mt-12 flex flex-col gap-5 border-t border-line pt-7 text-xs text-fg-faint sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid gap-3">
+            <p className="font-mono">
+              © {new Date().getFullYear()} {site.legalName}
+            </p>
+            <p className="font-mono">Jujuy · Salta · Tucumán · Catamarca, Argentina</p>
+          </div>
+          <PoweredBy compact />
         </div>
       </div>
     </footer>
