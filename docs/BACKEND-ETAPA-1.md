@@ -149,7 +149,7 @@ por un test.
 | Comando | Qué prueba | Resultado |
 |---|---|---|
 | `npm run test` | Reglas puras: ranking de portada, saneamiento, validación de publicación, firma de imagen, mapeo del contrato | **25 ✅** |
-| `npm run test:rules` | RLS, privilegios de tabla, rol admin y reglas de la base contra un Postgres real | **35 ✅** |
+| `npm run test:rules` | RLS, privilegios de tabla, rol admin y reglas de la base contra un Postgres real | **37 ✅** |
 | `npm run test:e2e` | Los criterios de aceptación por HTTP, con el sitio levantado | **21 ✅** |
 | `npm run build` | Compila y prerenderiza las tres notas desde la base | ✅ |
 | `npm run lint` | Sin errores nuevos (queda 1 warning preexistente en `coverage-explorer.tsx`) | ✅ |
@@ -170,7 +170,8 @@ usuarios y escriben notas.
 4. **Sube una imagen válida y se rechazan las inválidas** — tres rejas: Zod,
    firma real del archivo (magic bytes) y el propio bucket. Un HTML renombrado a
    `.jpg` con `Content-Type: image/jpeg` se rechaza.
-5. **La destacada se elige manualmente** — `is_featured` garantiza una sola;
+5. **La destacada se elige manualmente** — `is_featured` y un índice único
+   parcial garantizan una sola incluso ante escrituras concurrentes;
    si todavía no eligieron ninguna, la portada usa la publicación más reciente.
    `priority` queda guardada para una etapa posterior y no altera la tapa.
 6. **Las últimas noticias van en orden cronológico** y sin la destacada.
@@ -183,26 +184,27 @@ usuarios y escriben notas.
 
 ## 5. Pendientes
 
-**Hecho el 2026-09-04 sobre el proyecto real:**
+**Hecho entre el 2026-09-04 y el 2026-09-05 sobre el proyecto real:**
 
-- Las primeras 5 migraciones aplicadas y registradas en
+- Las primeras 6 migraciones aplicadas y registradas en
   `supabase_migrations.schema_migrations`. Se aplicaron por **Management API**
   con el PAT, porque la contraseña de la base no estaba disponible; el proyecto
   estaba completamente vacío (0 tablas, 0 buckets, 0 usuarios) antes de tocarlo.
 - Registro público cerrado y mínimo de contraseña alineado en 8.
-- `.env.local` apuntando al proyecto real con la clave **publishable**
-  (`sb_publishable_...`), no la anon legacy.
+- La destacada manual está aplicada y el bucket limita imágenes a 3 MB.
+- `.env.local` apunta al stack local a propósito. Las credenciales de
+  producción se cargan únicamente en Vercel al desplegar.
 - Verificado contra producción, sólo lecturas: `anon` ve las 3 notas publicadas
   con su categoría; DELETE, INSERT, PATCH y el acceso a `profiles` dan 401; el
   signup anónimo da 422; la subida anónima al bucket se rechaza; el bucket tiene
-  sus 4 policies, 5 MB y los 3 tipos; `npm run build` prerenderiza las 3 notas
+  sus 4 policies, 3 MB y los 3 tipos; `npm run build` prerenderiza las 3 notas
   desde la nube; `/tv`, la nota, la sección y el 404 de sección inexistente
   responden bien, y `/tv/panel` sin sesión redirige al login.
 
 **Falta para poner el sitio en producción:**
 
-1. **Aplicar `20260905120000`** antes de desplegar el frontend actualizado:
-   agrega la destacada manual y reduce el techo del bucket a 3 MB.
+1. **Aplicar `20260905130000`** antes de desplegar el frontend actualizado:
+   cierra la carrera concurrente de la destacada y retira dos índices obsoletos.
 2. **Crear las cuentas del equipo de prensa** (Authentication → Add user, con
    "Auto Confirm User") y decidir quién es `admin`:
    `update public.profiles set role = 'admin' where id = '<uuid>';`
@@ -210,16 +212,16 @@ usuarios y escriben notas.
 3. **Cargar las dos variables en Vercel** (`NEXT_PUBLIC_SUPABASE_URL` y
    `NEXT_PUBLIC_SUPABASE_ANON_KEY`) y desplegar. Sin autorización explícita no
    toqué Vercel ni pushee la rama.
-3. ⚠️ **Confirmar el plan de la organización** `swwsxexyzvbnzoqwzjgd`. El PAT no
+4. ⚠️ **Confirmar el plan de la organización** `swwsxexyzvbnzoqwzjgd`. El PAT no
    tiene alcance para leerlo (`Forbidden`). La política de la casa
    (`../../INFRAESTRUCTURA-DMG.md`) es un solo Supabase Pro compartido; si esta
    cuenta dedicada de DigitalMatch quedó en plan free, el proyecto no hereda
    backups ni límites del Pro — y eso es lo que sostiene la mensualidad del
    doc 08.
-4. ⚠️ **El PAT circuló por chat.** Conviene revocarlo en
+5. ⚠️ **El PAT circuló por chat.** Conviene revocarlo en
    <https://supabase.com/dashboard/account/tokens> cuando termine el setup: da
    acceso completo a la cuenta por API.
-5. **Contenido real**: las tres notas migradas son material institucional de
+6. **Contenido real**: las tres notas migradas son material institucional de
    demostración.
 
 Además, quedan afuera a propósito y conviene tenerlos anotados:
@@ -254,6 +256,7 @@ supabase/migrations/20260904120200_etapa1_editorial_seed.sql
 supabase/migrations/20260904150000_etapa1_privilegios_minimos.sql
 supabase/migrations/20260904160000_etapa1_rol_admin_explicito.sql
 supabase/migrations/20260905120000_etapa1_destacada_manual_e_imagenes.sql
+supabase/migrations/20260905130000_etapa1_destacada_unica.sql
 
 lib/supabase/env.ts                     lib/editorial/types.ts
 lib/supabase/server.ts                  lib/editorial/queries.ts

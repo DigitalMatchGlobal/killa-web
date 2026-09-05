@@ -20,12 +20,13 @@ supabase/
 | `20260904150000_etapa1_privilegios_minimos.sql` | revoca y re-otorga el mínimo a `anon`/`authenticated` (ver §Hallazgo de los privilegios) |
 | `20260904160000_etapa1_rol_admin_explicito.sql` | el trigger de alta ignora `raw_user_meta_data.role`: todo usuario nace `editor` |
 | `20260905120000_etapa1_destacada_manual_e_imagenes.sql` | agrega `is_featured`, garantiza una sola destacada y ajusta imágenes a 3 MB |
+| `20260905130000_etapa1_destacada_unica.sql` | garantiza una sola destacada también bajo concurrencia y retira índices de ranking sin uso |
 
-Las seis son **idempotentes**: se pueden re-correr sin duplicar nada.
+Las siete son **idempotentes**: se pueden re-correr sin duplicar nada.
 
-**Estado en producción:** las primeras cinco fueron aplicadas el 2026-09-04.
-La migración `20260905120000` está validada localmente y queda pendiente de
-aplicación remota junto con el despliegue de esta versión.
+**Estado en producción:** las primeras seis fueron aplicadas y verificadas.
+La migración `20260905130000` está validada localmente y debe aplicarse antes
+de desplegar esta versión.
 
 ## Levantar el entorno local (recomendado para trabajar)
 

@@ -194,6 +194,11 @@ export async function saveArticleAction(
     })
     .eq("id", id);
 
+  if (error?.code === "23505" && input.isFeatured) {
+    return fail(
+      "Otra persona cambió la noticia destacada al mismo tiempo. Recargá la página e intentá nuevamente.",
+    );
+  }
   if (error) return fail(`No se pudo guardar: ${error.message}`);
 
   revalidatePath(PANEL_PATH);

@@ -11,9 +11,12 @@
 -- editorial por RLS. La lectura de una foto de prensa ya publicada no es
 -- información sensible.
 --
--- El límite de 5 MB y los tres tipos permitidos se declaran acá **además** de
+-- El límite inicial de 5 MB y los tres tipos permitidos se declaran acá **además** de
 -- validarse en el servidor: si alguien consigue un token de editor y sube por
 -- la API directa, el bucket rechaza igual.
+-- Una migración posterior baja el techo a 3 MB. Por eso, si este archivo
+-- histórico se ejecuta manualmente sobre un bucket existente, el `on conflict`
+-- preserva el límite vigente en vez de restaurar 5 MB por accidente.
 --
 -- La guarda `to_regclass` replica el patrón de sitio-evolucion-antoniana: el
 -- esquema `storage` lo crea storage-api, no la imagen de Postgres. En un
@@ -39,7 +42,6 @@ begin
   )
   on conflict (id) do update
     set public             = excluded.public,
-        file_size_limit    = excluded.file_size_limit,
         allowed_mime_types = excluded.allowed_mime_types;
 
   -- Lectura: cualquiera, incluidos los crawlers sociales (ver cabecera).

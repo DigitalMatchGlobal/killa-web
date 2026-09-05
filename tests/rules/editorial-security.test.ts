@@ -440,6 +440,28 @@ describe("criterios 5 y 6: portada y orden cronológico, resueltos en SQL", () =
     expect(data?.find((row) => row.id === primera.id)?.is_featured).toBe(false);
     expect(data?.find((row) => row.id === segunda.id)?.is_featured).toBe(true);
   });
+
+  it("nunca deja dos destacadas ante escrituras concurrentes", async () => {
+    const primera = await seedArticle();
+    const segunda = await seedArticle();
+
+    const [resultadoA, resultadoB] = await Promise.all([
+      service.from("articles").update({ is_featured: true }).eq("id", primera.id),
+      service.from("articles").update({ is_featured: true }).eq("id", segunda.id),
+    ]);
+
+    const { data, error } = await service
+      .from("articles")
+      .select("id")
+      .eq("is_featured", true);
+
+    expect(error).toBeNull();
+    expect(data).toHaveLength(1);
+    // Bajo carrera, el índice puede hacer fallar una transacción o el trigger
+    // puede serializar el resultado. En ambos casos el invariante es uno solo.
+    const failedWrites = [resultadoA.error, resultadoB.error].filter(Boolean);
+    expect(failedWrites.length).toBeLessThanOrEqual(1);
+  });
 });
 
 describe("filtro por categoría y paginación", () => {
