@@ -153,6 +153,18 @@ body {
 :root[data-theme="light"] .brand-logo-dark { display: none; }
 :root[data-theme="light"] .brand-logo-light { display: block; }
 
+/* El PNG oficial de Killa TV viene sobre blanco. El modo de mezcla integra
+ * ese fondo a cada tema y conserva cian + blanco/negro sin recrear la marca. */
+.tv-logo-image {
+  filter: invert(1) hue-rotate(180deg);
+  mix-blend-mode: screen;
+}
+
+:root[data-theme="light"] .tv-logo-image {
+  filter: none;
+  mix-blend-mode: multiply;
+}
+
 .hero-frame {
   height: var(--killa-mobile-vh, 100svh);
   min-height: 32rem;

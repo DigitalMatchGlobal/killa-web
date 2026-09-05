@@ -3,8 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
-import { Logo } from "@/components/brand/logo";
 import { ArticleCard } from "@/components/tv/article-card";
+import { TvFooter } from "@/components/tv/tv-footer";
+import { TvLogo } from "@/components/tv/tv-logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { getArticlesByCategory, getCategories } from "@/lib/editorial/queries";
 
@@ -74,8 +75,8 @@ export default async function CategoryPage({
     <div className="min-h-screen bg-midnight text-fg">
       <header className="sticky top-0 z-40 border-b border-line bg-midnight/88 backdrop-blur-xl">
         <div className="shell flex h-[72px] items-center justify-between gap-4">
-          <Link href="/" aria-label="Killa Comunicaciones" className="shrink-0">
-            <Logo priority />
+          <Link href="/tv" aria-label="Portada de Killa TV" className="shrink-0">
+            <TvLogo priority />
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -141,14 +142,7 @@ export default async function CategoryPage({
         ) : null}
       </main>
 
-      <footer className="border-t border-line">
-        <div className="shell flex flex-col gap-2 py-6 font-mono text-xs text-fg-faint sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 Killa TV · Norte argentino</p>
-          <Link href="/tv" className="transition-colors hover:text-sand">
-            Volver a la portada
-          </Link>
-        </div>
-      </footer>
+      <TvFooter />
     </div>
   );
 }

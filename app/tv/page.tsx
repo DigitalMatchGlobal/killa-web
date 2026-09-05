@@ -4,13 +4,12 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
-  ArrowUpRight,
   CalendarDays,
-  LockKeyhole,
-  Play,
 } from "lucide-react";
 
 import { ArticleCard } from "@/components/tv/article-card";
+import { TvFooter } from "@/components/tv/tv-footer";
+import { TvLogo } from "@/components/tv/tv-logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { formatCardDate } from "@/lib/editorial/format";
 import { getCategories, getTvHomeData } from "@/lib/editorial/queries";
@@ -65,7 +64,7 @@ function publicationDate() {
 
 function SecondaryStory({ article }: { article: Article }) {
   return (
-    <article className="group border-t border-line py-5 first:border-t-0 first:pt-0 lg:first:border-t lg:first:pt-5">
+    <article className="group border-t border-line py-5 first:border-t-0 first:pt-0">
       <Link
         href={`/tv/noticias/${article.slug}`}
         className="grid grid-cols-[7rem_minmax(0,1fr)] gap-4 sm:grid-cols-[9rem_minmax(0,1fr)] lg:grid-cols-1"
@@ -112,12 +111,7 @@ export default async function KillaTvPage() {
       <header className="sticky top-0 z-40 border-b border-line bg-midnight/92 backdrop-blur-xl">
         <div className="shell flex h-16 items-center justify-between gap-3 sm:h-[72px]">
           <Link href="/tv" aria-label="Portada de Killa TV" className="leading-none">
-            <span className="font-display text-[1.7rem] font-bold tracking-[-0.06em] sm:text-[2rem]">
-              killa<span className="text-sand">tv</span>
-            </span>
-            <span className="ml-2 hidden font-mono text-xs uppercase tracking-[0.13em] text-fg-faint sm:inline">
-              La señal del norte
-            </span>
+            <TvLogo priority />
           </Link>
 
           <div className="flex items-center gap-2">
@@ -262,7 +256,7 @@ export default async function KillaTvPage() {
                 </h2>
                 <span className="font-mono text-xs text-fg-faint">EN ORDEN</span>
               </div>
-              <div>
+              <div className="pt-5 sm:pt-6">
                 {coverStories.map((article) => (
                   <SecondaryStory key={article.id} article={article} />
                 ))}
@@ -299,49 +293,8 @@ export default async function KillaTvPage() {
           </section>
         ) : null}
 
-        <section className="border-y border-line bg-night/70">
-          <div className="shell grid gap-6 py-8 sm:py-10 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div className="flex items-start gap-4">
-              <span className="grid size-11 shrink-0 place-items-center rounded-full border border-sand/25 bg-sand/[0.07] text-sand">
-                <LockKeyhole size={19} aria-hidden />
-              </span>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sand">
-                  Equipo de prensa
-                </p>
-                <h2 className="mt-1 font-display text-xl font-semibold tracking-tight sm:text-2xl">
-                  Administración editorial
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-fg-muted">
-                  Crear, previsualizar, priorizar y publicar noticias desde un panel privado.
-                </p>
-              </div>
-            </div>
-            <Link
-              href="/tv/panel"
-              className="btn btn-ghost w-full border-sand/35 hover:border-sand/70 lg:w-auto"
-            >
-              Entrar al panel
-              <ArrowUpRight size={17} aria-hidden />
-            </Link>
-          </div>
-        </section>
       </main>
-
-      <footer className="border-t border-line">
-        <div className="shell flex flex-col gap-3 py-6 text-sm text-fg-faint sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 Killa TV · Norte argentino</p>
-          <div className="flex items-center gap-5">
-            <a href={youtubeLive} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 transition-colors hover:text-red-400">
-              <Play size={14} fill="currentColor" aria-hidden />
-              Señal en vivo
-            </a>
-            <Link href="/" className="transition-colors hover:text-sand">
-              Killa Internet
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <TvFooter />
     </div>
   );
 }

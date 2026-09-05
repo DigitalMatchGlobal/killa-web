@@ -3,9 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-import { Logo } from "@/components/brand/logo";
 import { ArticleCard } from "@/components/tv/article-card";
 import { ArticleView } from "@/components/tv/article-view";
+import { TvFooter } from "@/components/tv/tv-footer";
+import { TvLogo } from "@/components/tv/tv-logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { getArticleBySlug, getLatestArticles, getPublishedSlugs } from "@/lib/editorial/queries";
 
@@ -76,8 +77,8 @@ export default async function TvNewsDetail({
     <div className="min-h-screen bg-midnight text-fg">
       <header className="border-b border-line bg-midnight/90 backdrop-blur-xl">
         <div className="shell flex h-[72px] items-center justify-between gap-4">
-          <Link href="/" aria-label="Killa Comunicaciones">
-            <Logo priority />
+          <Link href="/tv" aria-label="Portada de Killa TV">
+            <TvLogo priority />
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -111,6 +112,7 @@ export default async function TvNewsDetail({
           </section>
         ) : null}
       </main>
+      <TvFooter />
     </div>
   );
 }
