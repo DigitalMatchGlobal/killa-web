@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, Play } from "lucide-react";
 
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
+import { PoweredBy } from "@/components/brand/powered-by";
 import { TvLogo } from "@/components/tv/tv-logo";
 
 const youtubeLive = "https://www.youtube.com/@killatvok/streams";
@@ -59,18 +60,7 @@ export function TvFooter() {
           <div className="mt-10 flex flex-col gap-4 border-t border-line pt-5 text-xs text-fg-faint sm:flex-row sm:items-center sm:justify-between">
             <p>© 2026 Killa TV · Norte argentino</p>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-              <a
-                href="https://www.digitalmatchglobal.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group inline-flex items-center gap-1.5 rounded-full border border-sand/20 bg-sand/[0.04] px-3 py-1.5 transition-colors hover:border-sand/45"
-                aria-label="Sitio desarrollado por DigitalMatchGlobal"
-              >
-                <span className="text-[0.6rem] uppercase tracking-[0.13em] text-fg-faint">Desarrollado por</span>
-                <span className="font-display text-[0.68rem] font-semibold text-sand transition-colors group-hover:text-fg">
-                  DigitalMatchGlobal
-                </span>
-              </a>
+              <PoweredBy accent="sand" compact />
               <Link
                 href="/tv/panel"
                 className="text-[0.62rem] uppercase tracking-[0.12em] text-fg-faint/45 transition-colors hover:text-fg-muted"
@@ -86,4 +76,3 @@ export function TvFooter() {
     </>
   );
 }
-

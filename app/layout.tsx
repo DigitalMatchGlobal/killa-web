@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Sora } from "next/font/google";
 
+import { publicSiteUrl } from "@/lib/public-url";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -38,18 +39,8 @@ const description =
  * sirve la imagen. Al pasar a killa.com.ar, NEXT_PUBLIC_SITE_URL permite fijar
  * el dominio definitivo sin volver a tocar el código.
  */
-const deploymentUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  process.env.VERCEL_PROJECT_PRODUCTION_URL ??
-  process.env.VERCEL_URL;
-const metadataOrigin = deploymentUrl
-  ? deploymentUrl.startsWith("http")
-    ? deploymentUrl
-    : `https://${deploymentUrl}`
-  : site.url;
-
 export const metadata: Metadata = {
-  metadataBase: new URL(metadataOrigin),
+  metadataBase: new URL(publicSiteUrl()),
   title: { default: title, template: "%s · Killa" },
   description,
   applicationName: site.legalName,
@@ -77,7 +68,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#F4F8FC",
+  themeColor: "#040A16",
   colorScheme: "light dark",
 };
 
@@ -87,12 +78,12 @@ const themeScript = `
       var saved = localStorage.getItem('killa-color-theme');
       var theme = saved === 'light' || saved === 'dark'
         ? saved
-        : 'light';
+        : 'dark';
       document.documentElement.dataset.theme = theme;
       document.documentElement.style.colorScheme = theme;
     } catch (_) {
-      document.documentElement.dataset.theme = 'light';
-      document.documentElement.style.colorScheme = 'light';
+      document.documentElement.dataset.theme = 'dark';
+      document.documentElement.style.colorScheme = 'dark';
     }
   })();
 `;
