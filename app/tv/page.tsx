@@ -2,15 +2,13 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowLeft,
   ArrowRight,
   CalendarDays,
 } from "lucide-react";
 
 import { ArticleCard } from "@/components/tv/article-card";
 import { TvFooter } from "@/components/tv/tv-footer";
-import { TvLogo } from "@/components/tv/tv-logo";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { TvPublicHeader } from "@/components/tv/tv-public-header";
 import { formatCardDate } from "@/lib/editorial/format";
 import { getCategories, getTvHomeData } from "@/lib/editorial/queries";
 import type { Article } from "@/lib/editorial/types";
@@ -48,8 +46,6 @@ export const metadata: Metadata = {
 /** Se revalida sola cada 5 minutos; el panel además invalida al publicar. */
 export const revalidate = 300;
 
-const youtubeLive = "https://www.youtube.com/@killatvok/streams";
-
 function publicationDate() {
   const formatted = new Intl.DateTimeFormat("es-AR", {
     weekday: "long",
@@ -60,6 +56,15 @@ function publicationDate() {
   }).format(new Date());
 
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+}
+
+function compactPublicationDate() {
+  return new Intl.DateTimeFormat("es-AR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "America/Argentina/Salta",
+  }).format(new Date());
 }
 
 function SecondaryStory({ article }: { article: Article }) {
@@ -108,96 +113,19 @@ export default async function KillaTvPage() {
 
   return (
     <div className="min-h-screen bg-midnight text-fg">
-      <header className="sticky top-0 z-40 border-b border-line bg-midnight/92 backdrop-blur-xl">
-        <div className="shell flex h-16 items-center justify-between gap-3 sm:h-[72px]">
-          <Link href="/tv" aria-label="Portada de Killa TV" className="leading-none">
-            <TvLogo priority />
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <a
-              href={youtubeLive}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden min-h-10 items-center gap-2 rounded-full border border-red-400/25 bg-red-400/[0.06] px-4 font-display text-sm font-semibold text-fg sm:inline-flex"
-            >
-              <span
-                className="size-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.75)]"
-                aria-hidden
-              />
-              Señal en vivo
-            </a>
-            <ThemeToggle />
-            <Link
-              href="/"
-              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-line px-3.5 font-display text-xs font-semibold text-fg-muted transition-colors hover:border-sand/60 hover:text-fg sm:text-sm"
-            >
-              <ArrowLeft size={15} aria-hidden />
-              <span className="hidden sm:inline">Killa Internet</span>
-              <span className="sm:hidden">Internet</span>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <TvPublicHeader categories={categories} isHome />
 
       <main>
-        <section className="border-b border-line bg-night/35">
-          <div className="shell">
-            <div className="flex items-end justify-between gap-5 py-5 sm:py-7">
-              <div>
-                <p className="font-mono text-xs uppercase tracking-[0.16em] text-sand">
-                  Noticias · Deportes · Turismo
-                </p>
-                <h1 className="mt-1 font-display text-[clamp(2rem,9vw,4rem)] font-bold leading-none tracking-[-0.055em]">
-                  Killa TV
-                </h1>
-              </div>
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-medium text-fg">{publicationDate()}</p>
-                <p className="mt-1 text-xs uppercase tracking-[0.12em] text-fg-faint">
-                  Norte argentino
-                </p>
-              </div>
-            </div>
-
-            <div className="-mx-5 overflow-x-auto border-t border-line px-5 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
-              <nav
-                className="flex min-w-max items-center gap-6 py-3 text-sm font-semibold"
-                aria-label="Secciones de Killa TV"
-              >
-                <Link href="/tv" className="text-sand">
-                  Portada
-                </Link>
-                {categories.map((category) => (
-                  <Link
-                    key={category.id}
-                    href={`/tv/categoria/${category.slug}`}
-                    className="text-fg-muted transition-colors hover:text-sand"
-                  >
-                    {category.name}
-                  </Link>
-                ))}
-                <a
-                  href={youtubeLive}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-fg-muted transition-colors hover:text-red-400 sm:hidden"
-                >
-                  <span className="size-2 rounded-full bg-red-500" aria-hidden />
-                  En vivo
-                </a>
-              </nav>
-            </div>
-          </div>
-        </section>
-
-        <section className="shell py-6 sm:py-10">
+        <section className="shell py-7 sm:py-10">
           <div className="mb-5 flex items-center gap-3 border-b border-line pb-3">
             <span className="size-2 rounded-full bg-sand shadow-[0_0_12px_rgb(var(--sand)/0.55)]" aria-hidden />
             <p className="font-mono text-xs font-semibold uppercase tracking-[0.16em] text-sand">
               La portada
             </p>
-            <span className="ml-auto text-xs text-fg-faint sm:hidden">{publicationDate()}</span>
+            <span className="ml-auto text-right text-xs text-fg-faint">
+              <span className="sm:hidden">{compactPublicationDate()}</span>
+              <span className="hidden sm:inline">{publicationDate()}</span>
+            </span>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.7fr)_minmax(18rem,0.7fr)] lg:gap-10">
@@ -230,7 +158,7 @@ export default async function KillaTvPage() {
                         {formatCardDate(featured.publishedAt)}
                       </span>
                     </div>
-                    <h2 className="mt-3 max-w-4xl font-display text-[clamp(1.85rem,6.7vw,3.5rem)] font-bold leading-[1.03] tracking-[-0.045em] transition-colors group-hover:text-sand">
+                    <h2 className="mt-3 max-w-4xl font-display text-[clamp(1.68rem,6.7vw,3.5rem)] font-bold leading-[1.06] tracking-[-0.04em] transition-colors group-hover:text-sand">
                       {featured.title}
                     </h2>
                     <p className="mt-4 max-w-3xl text-base leading-relaxed text-fg-muted sm:text-lg">

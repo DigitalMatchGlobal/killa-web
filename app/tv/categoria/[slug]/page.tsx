@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Newspaper } from "lucide-react";
 
 import { ArticleCard } from "@/components/tv/article-card";
 import { TvFooter } from "@/components/tv/tv-footer";
-import { TvLogo } from "@/components/tv/tv-logo";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { TvPublicHeader } from "@/components/tv/tv-public-header";
 import { getArticlesByCategory, getCategories } from "@/lib/editorial/queries";
 
 /**
@@ -62,7 +61,8 @@ export default async function CategoryPage({
 }) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
 
-  const category = await findCategory(slug);
+  const categories = await getCategories();
+  const category = categories.find((item) => item.slug === slug) ?? null;
   if (!category) notFound();
 
   const page = Number.parseInt(query.pagina ?? "1", 10);
@@ -73,32 +73,23 @@ export default async function CategoryPage({
 
   return (
     <div className="min-h-screen bg-midnight text-fg">
-      <header className="sticky top-0 z-40 border-b border-line bg-midnight/88 backdrop-blur-xl">
-        <div className="shell flex h-[72px] items-center justify-between gap-4">
-          <Link href="/tv" aria-label="Portada de Killa TV" className="shrink-0">
-            <TvLogo priority />
-          </Link>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Link
-              href="/tv"
-              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-line px-3.5 font-display text-xs font-semibold text-fg-muted hover:border-sand/60 hover:text-fg sm:text-sm"
-            >
-              <ArrowLeft size={15} aria-hidden />
-              Killa TV
-            </Link>
-          </div>
-        </div>
-      </header>
+      <TvPublicHeader categories={categories} activeCategory={category.slug} />
 
-      <main className="shell section-pad">
-        <p className="eyebrow text-sand">Sección</p>
-        <h1 className="display mt-4 text-[clamp(2.4rem,9vw,4.6rem)]">{category.name}</h1>
-        <p className="mt-4 text-sm text-fg-muted">
-          {result.total === 0
-            ? "Todavía no hay notas publicadas en esta sección."
-            : `${result.total} ${result.total === 1 ? "nota publicada" : "notas publicadas"}.`}
-        </p>
+      <main className="shell py-9 sm:py-14">
+        <Link
+          href="/tv"
+          className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line px-4 font-display text-sm font-semibold text-fg-muted transition-colors hover:border-sand/60 hover:text-sand"
+        >
+          <ArrowLeft size={16} aria-hidden />
+          Volver a la portada
+        </Link>
+        <p className="eyebrow mt-8 flex w-fit text-sand">Sección</p>
+        <h1 className="display mt-5 text-[clamp(2.4rem,9vw,4.6rem)]">{category.name}</h1>
+        {result.total > 0 ? (
+          <p className="mt-4 text-sm text-fg-muted">
+            {result.total} {result.total === 1 ? "nota publicada" : "notas publicadas"}.
+          </p>
+        ) : null}
 
         {result.items.length > 0 ? (
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
@@ -106,7 +97,33 @@ export default async function CategoryPage({
               <ArticleCard key={article.id} article={article} />
             ))}
           </div>
-        ) : null}
+        ) : (
+          <div className="mt-10 rounded-[1.5rem] border border-line bg-night/45 px-6 py-9 sm:px-9 sm:py-11">
+            <span className="grid size-12 place-items-center rounded-full border border-sand/25 bg-sand/[0.07] text-sand">
+              <Newspaper size={20} aria-hidden />
+            </span>
+            <h2 className="mt-5 font-display text-lg font-bold leading-tight text-fg sm:text-xl">
+              Estamos preparando <span className="whitespace-nowrap">esta sección</span>
+            </h2>
+            <p className="mt-2 max-w-lg text-sm leading-relaxed text-fg-muted">
+              Todavía no hay notas publicadas en {category.name}. Podés volver a la portada o explorar otra sección.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/tv" className="btn bg-sand text-midnight hover:bg-sand/90">
+                Ver la portada
+                <ArrowRight size={15} aria-hidden />
+              </Link>
+              {categories
+                .filter((item) => item.slug !== category.slug)
+                .slice(0, 1)
+                .map((item) => (
+                  <Link key={item.id} href={`/tv/categoria/${item.slug}`} className="btn btn-ghost">
+                    Explorar {item.name}
+                  </Link>
+                ))}
+            </div>
+          </div>
+        )}
 
         {result.pageCount > 1 ? (
           <nav
