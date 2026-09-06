@@ -24,7 +24,7 @@ export function MarkdownContent({
   return (
     <div
       className={cn(
-        "min-w-0 text-fg-muted [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+        "min-w-0 break-words text-fg-muted [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
         compact ? "text-sm leading-7" : "text-[1.05rem] leading-8",
       )}
     >
@@ -77,13 +77,53 @@ export function MarkdownContent({
           ),
           a: ({ className, ...props }) => (
             <a
-              className={cn("font-medium text-cyan underline decoration-cyan/35 underline-offset-4 hover:decoration-cyan", className)}
+              className={cn("font-medium break-words text-cyan underline decoration-cyan/35 underline-offset-4 hover:decoration-cyan", className)}
               target="_blank"
               rel="noopener noreferrer"
               {...props}
             />
           ),
           hr: (props) => <hr className="my-10 border-line" {...props} />,
+          // Una tabla de GFM no se achica sola: scrollea dentro de su caja
+          // en vez de estirar la nota entera.
+          table: ({ className, ...props }) => (
+            <div className="my-6 overflow-x-auto">
+              <table
+                className={cn("w-full min-w-[32rem] border-collapse text-sm", className)}
+                {...props}
+              />
+            </div>
+          ),
+          th: ({ className, ...props }) => (
+            <th
+              className={cn(
+                "border border-line bg-surface/60 px-3 py-2 text-left font-display font-semibold text-fg",
+                className,
+              )}
+              {...props}
+            />
+          ),
+          td: ({ className, ...props }) => (
+            <td className={cn("border border-line px-3 py-2 align-top", className)} {...props} />
+          ),
+          code: ({ className, ...props }) => (
+            <code
+              className={cn(
+                "rounded-md bg-surface/70 px-1.5 py-0.5 font-mono text-[0.9em] break-words text-fg",
+                className,
+              )}
+              {...props}
+            />
+          ),
+          pre: ({ className, ...props }) => (
+            <pre
+              className={cn(
+                "my-6 overflow-x-auto rounded-2xl border border-line bg-surface/60 p-4 font-mono text-sm leading-6 text-fg [&>code]:bg-transparent [&>code]:p-0",
+                className,
+              )}
+              {...props}
+            />
+          ),
           img: ({ className, alt, ...props }: ComponentPropsWithoutRef<"img">) => (
             // Las imágenes internas del cuerpo pueden venir de Storage o de
             // un medio externo; el navegador las carga en forma diferida.

@@ -153,7 +153,7 @@ export function ArticleForm({
   ] as const;
 
   return (
-    <form action={formAction} className="mt-5 grid gap-5 lg:grid-cols-[1fr_0.72fr]">
+    <form action={formAction} className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.72fr)]">
       {article ? <input type="hidden" name="id" value={article.id} /> : null}
       <input type="hidden" name="featuredImagePath" value={imagePath} />
 

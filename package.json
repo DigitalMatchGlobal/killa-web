@@ -13,7 +13,8 @@
     "test:rules": "node tools/run-rules-tests.mjs",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
-    "test:e2e": "node tools/verificacion-e2e.mjs"
+    "test:e2e": "node tools/verificacion-e2e.mjs",
+    "test:desbordes": "node tools/auditoria-desbordes.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",

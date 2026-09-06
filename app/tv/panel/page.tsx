@@ -162,7 +162,7 @@ export default async function EditorialPanelPage({
               {result.items.map((article) => (
                 <article
                   key={article.id}
-                  className="grid grid-cols-[56px_1fr_auto] items-center gap-3 px-4 py-4 sm:grid-cols-[84px_1fr_auto] sm:gap-4 sm:px-5"
+                  className="grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:grid-cols-[84px_minmax(0,1fr)_auto] sm:gap-4 sm:px-5"
                 >
                   <div className="relative aspect-square overflow-hidden rounded-lg border border-line bg-surface">
                     {article.featuredImageUrl ? (
@@ -199,7 +199,7 @@ export default async function EditorialPanelPage({
                         <span className="inline-flex items-center gap-1 text-sand"><Star size={11} fill="currentColor" aria-hidden /> Destacada</span>
                       ) : null}
                     </p>
-                    <h3 className="mt-1 line-clamp-2 font-display text-sm font-semibold sm:text-base">
+                    <h3 className="mt-1 line-clamp-2 break-words font-display text-sm font-semibold sm:text-base">
                       {article.title}
                     </h3>
                     <p className="mt-1 font-mono text-[0.52rem] text-fg-faint">
