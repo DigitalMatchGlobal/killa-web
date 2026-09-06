@@ -20,6 +20,28 @@ const nextConfig: NextConfig = {
   // Permite probar el servidor de desarrollo desde el iPhone en la misma red.
   // Para mostrarle la propuesta al cliente usamos igualmente el build de producción.
   allowedDevOrigins: ["192.168.1.187"],
+  experimental: {
+    serverActions: {
+      /**
+       * La subida de la imagen destacada viaja por una Server Action, y el
+       * tope por defecto de Next para el body de una action es **1 MB**.
+       * El panel acepta imágenes de hasta 3 MB (y el bucket también), así que
+       * cualquier foto de entre 1 y 3 MB moría con un 500 del framework antes
+       * de llegar a nuestro código: ni validación ni mensaje de error, la
+       * pantalla "This page couldn't load".
+       *
+       * 4 MB deja lugar para lo que agrega el multipart (límites de parte,
+       * cabeceras y metadatos: la guía de Next sugiere contar 10–20 KB) sobre
+       * los 3 MB reales, y queda por debajo del techo de 4.5 MB que Vercel
+       * impone al body de una función.
+       *
+       * Si algún día el límite editorial sube de ~4 MB, esto ya no alcanza:
+       * habría que subir al bucket directo desde el navegador con una URL
+       * firmada, en vez de pasar el archivo por la Server Action.
+       */
+      bodySizeLimit: "4mb",
+    },
+  },
   images: {
     remotePatterns: supabaseHost
       ? [
