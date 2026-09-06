@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 
+import { sharePillClass } from "./share-pill";
+
 export function CopyLinkButton({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);
 
@@ -31,7 +33,7 @@ export function CopyLinkButton({ url }: { url: string }) {
     <button
       type="button"
       onClick={copy}
-      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-line px-4 text-sm text-fg-muted hover:border-cyan/60 hover:text-fg"
+      className={`${sharePillClass} hover:border-cyan/60 hover:text-fg`}
       aria-live="polite"
     >
       {copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}

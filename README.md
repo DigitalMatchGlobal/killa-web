@@ -203,7 +203,16 @@ producción.
 - Decisiones, verificación y pendientes: [`docs/BACKEND-ETAPA-1.md`](docs/BACKEND-ETAPA-1.md)
 
 ```bash
-npm run test         # reglas puras (destacada, saneamiento, validación)
-npm run test:rules   # RLS contra un Postgres real
-npm run test:e2e     # criterios de aceptación por HTTP
+npm run test           # reglas puras (destacada, saneamiento, validación)
+npm run test:rules     # RLS contra un Postgres real
+npm run test:e2e       # criterios de aceptación por HTTP
+npm run test:desbordes # desbordes horizontales en anchos de teléfono reales
 ```
+
+`test:desbordes` necesita el sitio levantado (`npm run dev` o `npm start`) y
+Playwright instalado aparte (`npm i -D playwright`); usa el Chrome del sistema,
+no baja navegadores. Recorre las rutas públicas de 320 px a 1280 px y falla si
+algo se sale del ancho de la pantalla. Vale la pena correrlo antes de publicar
+cambios de maquetado: `body` tiene `overflow-x: hidden`, así que un desborde no
+se ve como una barra de scroll sino como texto cortado contra el margen derecho
+—invisible en desktop, evidente en el celular—.
