@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
 
 import { ArticleCard } from "@/components/tv/article-card";
 import { ArticleView } from "@/components/tv/article-view";
 import { TvFooter } from "@/components/tv/tv-footer";
-import { TvLogo } from "@/components/tv/tv-logo";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { getArticleBySlug, getLatestArticles, getPublishedSlugs } from "@/lib/editorial/queries";
+import { TvPublicHeader } from "@/components/tv/tv-public-header";
+import { getArticleBySlug, getCategories, getLatestArticles, getPublishedSlugs } from "@/lib/editorial/queries";
 
 /**
  * Nota pública. Sale de la base con la clave anónima, así que la RLS garantiza
@@ -71,27 +69,14 @@ export default async function TvNewsDetail({
   const { slug } = await params;
   const article = await getArticleBySlug(slug);
   if (!article) notFound();
-  const related = await getLatestArticles({ pageSize: 3, excludeId: article.id });
+  const [related, categories] = await Promise.all([
+    getLatestArticles({ pageSize: 3, excludeId: article.id }),
+    getCategories(),
+  ]);
 
   return (
     <div className="min-h-screen bg-midnight text-fg">
-      <header className="border-b border-line bg-midnight/90 backdrop-blur-xl">
-        <div className="shell flex h-[72px] items-center justify-between gap-4">
-          <Link href="/tv" aria-label="Portada de Killa TV">
-            <TvLogo priority />
-          </Link>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Link
-              href="/tv"
-              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-line px-3.5 font-display text-xs font-semibold text-fg-muted hover:border-sand/60 hover:text-fg sm:text-sm"
-            >
-              <ArrowLeft size={15} aria-hidden />
-              Killa TV
-            </Link>
-          </div>
-        </div>
-      </header>
+      <TvPublicHeader categories={categories} activeCategory={article.category.slug} />
 
       <main>
         <ArticleView article={article} />
