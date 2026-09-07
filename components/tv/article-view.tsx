@@ -1,8 +1,8 @@
 import Image from "next/image";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, PenLine } from "lucide-react";
 
 import { formatArticleDate } from "@/lib/editorial/format";
-import type { Article } from "@/lib/editorial/types";
+import { bylineLabel, type Article } from "@/lib/editorial/types";
 import { site } from "@/lib/site";
 import { MarkdownContent } from "./markdown-content";
 import { CopyLinkButton } from "./share-actions";
@@ -29,6 +29,9 @@ export function ArticleView({
   const canonicalUrl = `${site.url}${canonicalPath}`;
   const encodedUrl = encodeURIComponent(canonicalUrl);
   const publishedLabel = formatArticleDate(article.publishedAt);
+  // `null` cuando la nota no lleva firma: no se renderiza el "Por", ni el
+  // separador, ni se reserva altura. El espaciado queda igual que antes.
+  const byline = bylineLabel(article.byline);
 
   /**
    * WhatsApp, Facebook y LinkedIn arman la tarjeta con las etiquetas OG de la
@@ -77,6 +80,12 @@ export function ArticleView({
         ) : null}
 
         <div className="mt-6 flex flex-wrap items-center gap-4 font-mono text-xs text-fg-faint">
+          {byline ? (
+            <span className="inline-flex items-center gap-2 font-sans text-sm text-fg-muted">
+              <PenLine size={14} aria-hidden />
+              {byline}
+            </span>
+          ) : null}
           {publishedLabel ? (
             <span className="inline-flex items-center gap-2">
               <CalendarDays size={14} aria-hidden />

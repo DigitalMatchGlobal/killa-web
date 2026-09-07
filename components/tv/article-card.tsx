@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowUpRight, CalendarDays } from "lucide-react";
 
 import { formatCardDate } from "@/lib/editorial/format";
-import type { Article } from "@/lib/editorial/types";
+import { bylineLabel, type Article } from "@/lib/editorial/types";
 
 /** Tarjeta de nota. La comparten la portada y las páginas de sección. */
 export function ArticleCard({ article, sizes }: { article: Article; sizes?: string }) {
@@ -36,6 +36,11 @@ export function ArticleCard({ article, sizes }: { article: Article; sizes?: stri
             {article.title}
           </h3>
           <p className="mt-3 text-sm leading-relaxed text-fg-muted">{article.excerpt}</p>
+          {article.byline ? (
+            <p className="mt-3 truncate text-xs leading-snug text-fg-faint">
+              {bylineLabel(article.byline)}
+            </p>
+          ) : null}
           <span className="mt-6 inline-flex items-center gap-2 font-display text-sm font-semibold text-sand">
             Leer nota
             <ArrowUpRight size={15} aria-hidden />

@@ -34,6 +34,8 @@ export const fallbackArticles: Article[] = tvNews.map((item, index) => ({
   featuredImageUrl: item.image,
   imageAlt: item.imageAlt,
   status: "published",
+  // El contenido migrado nunca tuvo firma y no se le inventa una.
+  byline: null,
   priority: 1,
   isFeatured: index === 0,
   publishedAt: FALLBACK_DATES[index] ?? FALLBACK_DATES[0],

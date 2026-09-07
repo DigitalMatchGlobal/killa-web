@@ -11,7 +11,7 @@ import { TvFooter } from "@/components/tv/tv-footer";
 import { TvPublicHeader } from "@/components/tv/tv-public-header";
 import { formatCardDate } from "@/lib/editorial/format";
 import { getCategories, getTvHomeData } from "@/lib/editorial/queries";
-import type { Article } from "@/lib/editorial/types";
+import { bylineLabel, type Article } from "@/lib/editorial/types";
 
 export const metadata: Metadata = {
   title: "Killa TV",
@@ -96,6 +96,11 @@ function SecondaryStory({ article }: { article: Article }) {
           <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-fg-muted sm:text-sm">
             {article.excerpt}
           </p>
+          {article.byline ? (
+            <p className="mt-2 truncate text-xs leading-snug text-fg-faint">
+              {bylineLabel(article.byline)}
+            </p>
+          ) : null}
         </div>
       </Link>
     </article>
@@ -167,6 +172,11 @@ export default async function KillaTvPage() {
                     <p className="mt-3 line-clamp-2 max-w-3xl text-base leading-relaxed text-fg-muted sm:mt-4 sm:line-clamp-3 sm:text-lg lg:line-clamp-none">
                       {featured.excerpt}
                     </p>
+                    {featured.byline ? (
+                      <p className="mt-4 text-sm leading-snug text-fg-faint">
+                        {bylineLabel(featured.byline)}
+                      </p>
+                    ) : null}
                     <span className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full border border-sand/35 bg-sand/[0.08] px-4 font-display text-sm font-semibold text-sand transition-colors group-hover:bg-sand/[0.14] sm:mt-5">
                       Leer la noticia
                       <ArrowRight size={16} aria-hidden />
