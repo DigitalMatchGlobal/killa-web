@@ -86,7 +86,7 @@ async function seedArticle(overrides: Record<string, unknown> = {}) {
       priority: 1,
       ...overrides,
     })
-    .select("id, slug, status, published_at, priority, is_featured")
+    .select("id, slug, status, published_at, priority, is_featured, byline")
     .single();
 
   if (error) throw new Error(`No se pudo sembrar la nota: ${error.message}`);
@@ -98,6 +98,7 @@ async function seedArticle(overrides: Record<string, unknown> = {}) {
     published_at: string | null;
     priority: number;
     is_featured: boolean;
+    byline: string | null;
   };
 }
 
@@ -788,5 +789,228 @@ describe("privilegios de tabla: la RLS no es la única pata", () => {
 
     expect(error).toBeNull();
     expect((data ?? []).length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("firma editorial: la base la normaliza y la protege", () => {
+  /**
+   * La firma es pública y opcional, y vive SÓLO en `articles.byline`. Estas
+   * pruebas verifican las reglas contra Postgres real: que el trigger recorte y
+   * vacíe, que el CHECK rechace largos, que `anon` la lea únicamente en las
+   * publicadas y no pueda escribirla, y que `author_id`/`updated_by` sigan
+   * siendo auditoría interna sin convertirse en firma.
+   */
+
+  it("1) creación con firma válida", async () => {
+    const { data, error } = await editor
+      .from("articles")
+      .insert({ title: "Nota firmada por la editora", byline: "Nicolás Cardozo" })
+      .select("id, byline")
+      .single();
+
+    expect(error).toBeNull();
+    expect(data!.byline).toBe("Nicolás Cardozo");
+    createdArticleIds.push(data!.id as string);
+  });
+
+  it("2) creación sin firma: queda null", async () => {
+    const { data, error } = await editor
+      .from("articles")
+      .insert({ title: "Nota sin firma ninguna" })
+      .select("id, byline")
+      .single();
+
+    expect(error).toBeNull();
+    expect(data!.byline).toBeNull();
+    createdArticleIds.push(data!.id as string);
+  });
+
+  it("3) sólo espacios se convierte en null", async () => {
+    const { data, error } = await editor
+      .from("articles")
+      .insert({ title: "Nota con firma en blanco", byline: "     " })
+      .select("id, byline")
+      .single();
+
+    expect(error).toBeNull();
+    expect(data!.byline).toBeNull();
+    createdArticleIds.push(data!.id as string);
+  });
+
+  it("4) recorta los espacios de los extremos", async () => {
+    const { data, error } = await editor
+      .from("articles")
+      .insert({ title: "Nota con firma con espacios", byline: "   Redacción Killa TV   " })
+      .select("id, byline")
+      .single();
+
+    expect(error).toBeNull();
+    expect(data!.byline).toBe("Redacción Killa TV");
+    createdArticleIds.push(data!.id as string);
+  });
+
+  it("5) rechaza más de 100 caracteres, y acepta 100 exactos", async () => {
+    const larga = await editor
+      .from("articles")
+      .insert({ title: "Nota con firma larguísima", byline: "x".repeat(101) })
+      .select("id");
+    expect(larga.error).not.toBeNull();
+    expect(larga.error?.message).toContain("articles_byline_largo");
+
+    // El recorte corre ANTES del CHECK: 100 letras con espacios alrededor pasa.
+    const justa = await editor
+      .from("articles")
+      .insert({ title: "Nota con firma de cien", byline: `  ${"y".repeat(100)}  ` })
+      .select("id, byline")
+      .single();
+    expect(justa.error).toBeNull();
+    expect(justa.data!.byline).toHaveLength(100);
+    createdArticleIds.push(justa.data!.id as string);
+  });
+
+  it("6) edición: agregar una firma a una nota que no la tenía", async () => {
+    const nota = await seedArticle();
+    expect(nota.byline).toBeNull();
+
+    const { data, error } = await editor
+      .from("articles")
+      .update({ byline: "  Nicolás Cardozo  " })
+      .eq("id", nota.id)
+      .select("byline")
+      .single();
+
+    expect(error).toBeNull();
+    expect(data!.byline).toBe("Nicolás Cardozo");
+  });
+
+  it("7) edición: vaciar el campo guarda null y retira la firma", async () => {
+    const nota = await seedArticle({ byline: "Firma que se va a borrar" });
+    expect(nota.byline).toBe("Firma que se va a borrar");
+
+    // Es lo que manda el formulario cuando el editor borra el texto.
+    const vacio = await editor
+      .from("articles")
+      .update({ byline: "" })
+      .eq("id", nota.id)
+      .select("byline")
+      .single();
+    expect(vacio.data!.byline).toBeNull();
+
+    // Y un null explícito también.
+    await editor.from("articles").update({ byline: "Otra vez" }).eq("id", nota.id);
+    const nulo = await editor
+      .from("articles")
+      .update({ byline: null })
+      .eq("id", nota.id)
+      .select("byline")
+      .single();
+    expect(nulo.data!.byline).toBeNull();
+  });
+
+  it("8) anon lee la firma en una publicada", async () => {
+    const nota = await seedArticle({
+      byline: "Redacción Killa TV",
+      status: "published",
+      published_at: new Date().toISOString(),
+    });
+
+    const { data, error } = await anon
+      .from("articles")
+      .select("slug, byline")
+      .eq("id", nota.id)
+      .maybeSingle();
+
+    expect(error).toBeNull();
+    expect(data?.byline).toBe("Redacción Killa TV");
+  });
+
+  it("8b) pero NO la lee en un borrador ni en una archivada", async () => {
+    const borrador = await seedArticle({ byline: "Firma de un borrador" });
+    const archivada = await seedArticle({
+      byline: "Firma de una archivada",
+      status: "published",
+      published_at: new Date().toISOString(),
+    });
+    await service.from("articles").update({ status: "archived" }).eq("id", archivada.id);
+
+    for (const id of [borrador.id, archivada.id]) {
+      const { data } = await anon.from("articles").select("byline").eq("id", id);
+      expect(data).toEqual([]);
+    }
+  });
+
+  it("9) anon no puede crear ni modificar una firma", async () => {
+    const nota = await seedArticle({
+      byline: "Firma original",
+      status: "published",
+      published_at: new Date().toISOString(),
+    });
+
+    const insercion = await anon
+      .from("articles")
+      .insert({ title: "Nota intrusa firmada", byline: "Intruso" });
+    expect(insercion.error).not.toBeNull();
+
+    const edicion = await anon
+      .from("articles")
+      .update({ byline: "Firma cambiada por un intruso" })
+      .eq("id", nota.id);
+    expect(edicion.error).not.toBeNull();
+
+    const { data } = await service.from("articles").select("byline").eq("id", nota.id).single();
+    expect(data?.byline).toBe("Firma original");
+  });
+
+  it("10) las tres noticias del seed siguen sin firma", async () => {
+    const { data, error } = await service
+      .from("articles")
+      .select("slug, byline")
+      .in("slug", [
+        "killa-conecta-cuatro-provincias",
+        "dos-unidades-una-misma-red",
+        "infraestructura-propia-soluciones-a-medida",
+      ]);
+
+    expect(error).toBeNull();
+    expect(data).toHaveLength(3);
+    for (const fila of data ?? []) {
+      expect(fila.byline, `${fila.slug} no debería tener firma`).toBeNull();
+    }
+  });
+
+  it("11) author_id y updated_by siguen siendo auditoría, independientes de la firma", async () => {
+    // La firma no toca la auditoría...
+    const creada = await editor
+      .from("articles")
+      .insert({ title: "Nota para revisar la auditoría", byline: "Redacción Killa TV" })
+      .select("id, author_id, updated_by, byline")
+      .single();
+    expect(creada.error).toBeNull();
+    createdArticleIds.push(creada.data!.id as string);
+
+    expect(creada.data!.author_id).toBe(editorUserId);
+    expect(creada.data!.updated_by).toBe(editorUserId);
+    expect(creada.data!.byline).toBe("Redacción Killa TV");
+
+    // ...y la auditoría no se convierte en firma: al borrar la firma, sigue
+    // habiendo autor registrado y la nota queda sin firma pública.
+    const sinFirma = await editor
+      .from("articles")
+      .update({ byline: "" })
+      .eq("id", creada.data!.id)
+      .select("author_id, updated_by, byline")
+      .single();
+
+    expect(sinFirma.data!.byline).toBeNull();
+    expect(sinFirma.data!.author_id).toBe(editorUserId);
+    expect(sinFirma.data!.updated_by).toBe(editorUserId);
+  });
+
+  it("11b) anon sigue sin poder resolver quién es el autor", async () => {
+    // La contracara de que la firma sea su propia columna: el público nunca
+    // llega a `profiles`, así que author_id queda como un UUID opaco.
+    const { error } = await anon.from("profiles").select("id, display_name");
+    expect(error).not.toBeNull();
+    expect(error?.message.toLowerCase()).toContain("permission denied");
   });
 });

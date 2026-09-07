@@ -31,6 +31,14 @@ export type Article = {
   status: ArticleStatus;
   priority: ArticlePriority;
   isFeatured: boolean;
+  /**
+   * Firma editorial pública. `null` = la nota se publica sin firma.
+   *
+   * NO tiene relación con `authorId`/`updatedById`, que son auditoría interna:
+   * la firma es una decisión editorial por nota (puede decir "Redacción Killa
+   * TV", o el nombre de alguien que no cargó la nota, o nada).
+   */
+  byline: string | null;
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -97,8 +105,14 @@ export type ArticleRow = {
   status: string;
   priority: number;
   is_featured: boolean;
-  author_id: string | null;
-  updated_by: string | null;
+  byline?: string | null;
+  /**
+   * Auditoría interna. Sólo la trae el select del panel: los selects públicos
+   * no piden estas columnas, así que llegan `undefined` y `mapArticle` no las
+   * mira. La firma pública vive en `byline`.
+   */
+  author_id?: string | null;
+  updated_by?: string | null;
   published_at: string | null;
   created_at: string;
   updated_at: string;
@@ -117,6 +131,25 @@ type EmbeddedOne<T> = T | T[] | null;
 function oneOf<T>(embedded: EmbeddedOne<T> | undefined): T | null {
   if (!embedded) return null;
   return Array.isArray(embedded) ? (embedded[0] ?? null) : embedded;
+}
+
+/** Largo máximo de la firma. Espeja el CHECK `articles_byline_largo`. */
+export const BYLINE_MAX = 100;
+
+/**
+ * Recorta la firma y convierte vacío o sólo espacios en `null`.
+ * Es la misma regla que aplica el trigger `articles_normalize_byline_trg`.
+ */
+export function normalizeByline(value: string | null | undefined): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+/** Texto de la firma listo para renderizar, o `null` si la nota no lleva firma. */
+export function bylineLabel(byline: string | null | undefined): string | null {
+  const clean = normalizeByline(byline);
+  return clean ? `Por ${clean}` : null;
 }
 
 export function isArticleStatus(value: unknown): value is ArticleStatus {
@@ -163,6 +196,9 @@ export function mapArticle(row: ArticleRow, supabaseOrigin: string): Article {
     status: isArticleStatus(row.status) ? row.status : "draft",
     priority: toPriority(row.priority),
     isFeatured: row.is_featured,
+    // Se normaliza igual acá: una fila cargada antes del trigger, o por una vía
+    // que lo saltee, no debe renderizar "Por" seguido de nada.
+    byline: normalizeByline(row.byline),
     publishedAt: row.published_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -174,9 +210,9 @@ export function mapPanelArticle(row: ArticleRow, supabaseOrigin: string): PanelA
     ...mapArticle(row, supabaseOrigin),
     featuredImagePath: row.featured_image_path,
     categoryId: row.category_id,
-    authorId: row.author_id,
+    authorId: row.author_id ?? null,
     authorName: oneOf(row.author)?.display_name ?? null,
-    updatedById: row.updated_by,
+    updatedById: row.updated_by ?? null,
   };
 }
 

@@ -28,9 +28,17 @@ import {
  * navegador.
  */
 
+/**
+ * Columnas del portal público.
+ *
+ * `byline` entra acá porque la firma es contenido. `author_id` y `updated_by`
+ * SALIERON: son auditoría interna y ninguna página pública los renderiza, así
+ * que no hay razón para mandárselos a `anon` (aunque sean UUID opacos y
+ * `profiles` esté cerrada). La firma se lee de `byline` y de ningún otro lado.
+ */
 const ARTICLE_COLUMNS = `
   id, title, slug, excerpt, body, category_id, featured_image_path, image_alt,
-  status, priority, is_featured, author_id, updated_by, published_at, created_at, updated_at,
+  status, priority, is_featured, byline, published_at, created_at, updated_at,
   category:categories ( name, slug )
 `;
 
@@ -44,7 +52,7 @@ const ARTICLE_COLUMNS = `
  */
 const ARTICLE_COLUMNS_CATEGORY_INNER = `
   id, title, slug, excerpt, body, category_id, featured_image_path, image_alt,
-  status, priority, is_featured, author_id, updated_by, published_at, created_at, updated_at,
+  status, priority, is_featured, byline, published_at, created_at, updated_at,
   category:categories!inner ( name, slug )
 `;
 

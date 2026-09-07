@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { sanitizeBody, sanitizeSingleLine } from "./sanitize";
+import { BYLINE_MAX } from "./types";
 
 /**
  * Validación de servidor.
@@ -27,6 +28,7 @@ export const IMAGE_EXTENSIONS: Record<(typeof IMAGE_MIME_TYPES)[number], string>
 export const TITLE_MAX = 140;
 export const EXCERPT_MAX = 320;
 export const IMAGE_ALT_MAX = 180;
+export { BYLINE_MAX };
 
 const cleanLine = (value: unknown) =>
   typeof value === "string" ? sanitizeSingleLine(value) : value;
@@ -58,6 +60,25 @@ export const articleDraftSchema = z.object({
   featuredImagePath: z.preprocess(
     (value) => (value === "" || value === undefined ? null : value),
     z.string().max(400).nullable(),
+  ),
+  /**
+   * Firma editorial opcional.
+   *
+   * Se sanea como una línea y, si queda vacía, se guarda `null`: no existe un
+   * checkbox de "mostrar firma", la presencia del texto es lo que decide. Un
+   * campo que el editor vacía tiene que llegar a la base como `null`, no como
+   * cadena vacía, para que el portal deje de renderizar la firma.
+   */
+  byline: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return null;
+      const clean = sanitizeSingleLine(value);
+      return clean.length > 0 ? clean : null;
+    },
+    z
+      .string()
+      .max(BYLINE_MAX, `La firma no puede pasar de ${BYLINE_MAX} caracteres.`)
+      .nullable(),
   ),
   priority: z.coerce
     .number()

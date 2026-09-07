@@ -7,7 +7,14 @@ import {
   publishableSchema,
   sniffImageMime,
 } from "@/lib/editorial/validation";
-import { mapArticle, resolveFeaturedImageUrl, type Article } from "@/lib/editorial/types";
+import {
+  bylineLabel,
+  mapArticle,
+  normalizeByline,
+  resolveFeaturedImageUrl,
+  type Article,
+} from "@/lib/editorial/types";
+import { fallbackArticles } from "@/lib/editorial/fallback";
 
 /**
  * Reglas que no necesitan base: ranking de portada, saneamiento, validación de
@@ -30,6 +37,7 @@ function article(overrides: Partial<Article> & { id: string }): Article {
     status: overrides.status ?? "published",
     priority: overrides.priority ?? 1,
     isFeatured: overrides.isFeatured ?? false,
+    byline: overrides.byline ?? null,
     publishedAt: overrides.publishedAt ?? "2026-08-30T12:00:00Z",
     createdAt: "2026-08-30T12:00:00Z",
     updatedAt: "2026-08-30T12:00:00Z",
@@ -300,5 +308,126 @@ describe("mapeo al contrato público", () => {
     );
 
     expect(mapped.category.slug).toBe("deportes");
+  });
+});
+
+describe("firma editorial (byline)", () => {
+  /**
+   * La firma es contenido, no auditoría: `author_id`/`updated_by` no la
+   * alimentan ni le sirven de fallback. Estas pruebas fijan la regla de que la
+   * presencia del texto es lo único que decide si se muestra — no hay flag.
+   */
+
+  const base = {
+    title: "Killa suma una nueva localidad a la red",
+    excerpt: "El despliegue llega a una localidad más del Valle Calchaquí.",
+    body: "Cuerpo de la nota. ".repeat(12),
+    categoryId: null,
+    imageAlt: "Antena de Killa en el cerro",
+    featuredImagePath: "2026/09/foto.jpg",
+    priority: 3,
+    isFeatured: false,
+    slug: null,
+  };
+
+  it("normaliza: recorta los espacios de los extremos", () => {
+    expect(normalizeByline("   Nicolás Cardozo   ")).toBe("Nicolás Cardozo");
+  });
+
+  it("normaliza: vacío, espacios y null son todos null", () => {
+    expect(normalizeByline("")).toBeNull();
+    expect(normalizeByline("     ")).toBeNull();
+    expect(normalizeByline("\t\n  ")).toBeNull();
+    expect(normalizeByline(null)).toBeNull();
+    expect(normalizeByline(undefined)).toBeNull();
+  });
+
+  it("la etiqueta pública es «Por <nombre>», o null sin firma", () => {
+    expect(bylineLabel("Nicolás Cardozo")).toBe("Por Nicolás Cardozo");
+    expect(bylineLabel("Redacción Killa TV")).toBe("Por Redacción Killa TV");
+    expect(bylineLabel("   ")).toBeNull();
+    expect(bylineLabel(null)).toBeNull();
+    // Sin firma NO devuelve "Por " ni una cadena vacía: devuelve null, así el
+    // componente puede no renderizar nada en vez de dejar un hueco.
+    expect(bylineLabel("")).not.toBe("Por ");
+  });
+
+  it("validación: acepta una firma normal", () => {
+    const r = articleDraftSchema.safeParse({ ...base, byline: "Nicolás Cardozo" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.byline).toBe("Nicolás Cardozo");
+  });
+
+  it("validación: sin firma queda null (no cadena vacía)", () => {
+    for (const entrada of ["", "   ", null, undefined]) {
+      const r = articleDraftSchema.safeParse({ ...base, byline: entrada });
+      expect(r.success).toBe(true);
+      if (r.success) expect(r.data.byline).toBeNull();
+    }
+  });
+
+  it("validación: recorta antes de guardar", () => {
+    const r = articleDraftSchema.safeParse({ ...base, byline: "  Redacción Killa TV  " });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.byline).toBe("Redacción Killa TV");
+  });
+
+  it("validación: rechaza más de 100 caracteres", () => {
+    const r = articleDraftSchema.safeParse({ ...base, byline: "x".repeat(101) });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(r.error.issues[0]?.message).toMatch(/100/);
+  });
+
+  it("validación: 100 exactos entran, y el recorte no cuenta los espacios", () => {
+    expect(articleDraftSchema.safeParse({ ...base, byline: "y".repeat(100) }).success).toBe(true);
+    expect(
+      articleDraftSchema.safeParse({ ...base, byline: `   ${"z".repeat(100)}   ` }).success,
+    ).toBe(true);
+  });
+
+  it("validación: se sanea el HTML pegado, como el resto de los campos de una línea", () => {
+    const r = articleDraftSchema.safeParse({ ...base, byline: "<b>Redacción</b>" });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.byline).toBe("Redacción");
+  });
+
+  it("mapArticle expone byline y lo normaliza; no lo deriva del autor", () => {
+    const fila = {
+      id: "1",
+      title: "T",
+      slug: "t",
+      excerpt: "e",
+      body: "b",
+      category_id: null,
+      featured_image_path: null,
+      image_alt: null,
+      status: "published",
+      priority: 1,
+      is_featured: false,
+      published_at: "2026-09-01T10:00:00Z",
+      created_at: "2026-09-01T10:00:00Z",
+      updated_at: "2026-09-01T10:00:00Z",
+      category: null,
+    };
+
+    expect(mapArticle({ ...fila, byline: "  Redacción Killa TV " }, "").byline).toBe(
+      "Redacción Killa TV",
+    );
+    expect(mapArticle({ ...fila, byline: "   " }, "").byline).toBeNull();
+    expect(mapArticle({ ...fila, byline: null }, "").byline).toBeNull();
+
+    // Aunque la fila traiga auditoría y hasta el nombre del perfil, la firma
+    // sigue siendo null: no hay fallback desde el autor.
+    const conAutor = mapArticle(
+      { ...fila, byline: null, author_id: "uuid-de-alguien", author: { display_name: "ncardozo" } },
+      "",
+    );
+    expect(conAutor.byline).toBeNull();
+  });
+
+  it("el contenido migrado del fallback no tiene firma inventada", () => {
+    for (const article of fallbackArticles) {
+      expect(article.byline).toBeNull();
+    }
   });
 });

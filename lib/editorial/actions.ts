@@ -104,6 +104,7 @@ function readDraftForm(formData: FormData) {
     body: formString(formData, "body"),
     categoryId: formString(formData, "categoryId"),
     imageAlt: formString(formData, "imageAlt"),
+    byline: formString(formData, "byline"),
     featuredImagePath: formString(formData, "featuredImagePath"),
     priority: formString(formData, "priority") || "1",
     isFeatured: formString(formData, "isFeatured"),
@@ -139,6 +140,7 @@ export async function createDraftAction(
       category_id: input.categoryId,
       featured_image_path: input.featuredImagePath,
       image_alt: input.imageAlt,
+      byline: input.byline,
       priority: input.priority,
       is_featured: input.isFeatured,
       status: "draft" satisfies ArticleStatus,
@@ -186,6 +188,8 @@ export async function saveArticleAction(
       category_id: input.categoryId,
       featured_image_path: input.featuredImagePath,
       image_alt: input.imageAlt,
+      // Vaciar el campo guarda null y retira la firma del portal.
+      byline: input.byline,
       priority: input.priority,
       is_featured: input.isFeatured,
       // El slug de una nota publicada NO se cambia: los links compartidos por
@@ -226,6 +230,7 @@ export async function publishArticleAction(
     body: current.body,
     categoryId: current.categoryId,
     imageAlt: current.imageAlt,
+    byline: current.byline,
     featuredImagePath: current.featuredImagePath,
     priority: current.priority,
     isFeatured: current.isFeatured,

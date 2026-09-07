@@ -28,13 +28,19 @@ import {
 } from "@/lib/editorial/actions";
 import {
   EXCERPT_MAX,
+  BYLINE_MAX,
   IMAGE_ALT_MAX,
   IMAGE_MAX_BYTES,
   IMAGE_MIN_WIDTH,
   IMAGE_RECOMMENDED_BYTES,
   TITLE_MAX,
 } from "@/lib/editorial/validation";
-import { resolveFeaturedImageUrl, type Category, type PanelArticle } from "@/lib/editorial/types";
+import {
+  bylineLabel,
+  resolveFeaturedImageUrl,
+  type Category,
+  type PanelArticle,
+} from "@/lib/editorial/types";
 
 /**
  * Formulario de alta y edición.
@@ -69,6 +75,7 @@ export function ArticleForm({
   const [priority, setPriority] = useState(String(article?.priority ?? 1));
   const [isFeatured, setIsFeatured] = useState(article?.isFeatured ?? false);
   const [imageAlt, setImageAlt] = useState(article?.imageAlt ?? "");
+  const [byline, setByline] = useState(article?.byline ?? "");
   const [imagePath, setImagePath] = useState(article?.featuredImagePath ?? "");
   const [imageError, setImageError] = useState<string | null>(null);
   const [imageWarning, setImageWarning] = useState<string | null>(null);
@@ -78,6 +85,10 @@ export function ArticleForm({
 
   const imageUrl = resolveFeaturedImageUrl(imagePath || null, supabaseOrigin);
   const selectedCategory = categories.find((category) => category.id === categoryId);
+  // Misma función que usa el portal: lo que se ve en la vista previa es
+  // exactamente lo que se va a publicar, incluido el caso "sólo espacios",
+  // que no muestra nada.
+  const bylinePreview = bylineLabel(byline);
 
   function handleFile(file: File | undefined) {
     if (!file) return;
@@ -364,6 +375,27 @@ export function ArticleForm({
               </span>
             </label>
           </div>
+
+          <label className="grid gap-2">
+            <span className="flex items-center justify-between gap-3 font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
+              Firma de la nota (opcional)
+              <span>
+                {byline.trim().length}/{BYLINE_MAX}
+              </span>
+            </span>
+            <input
+              type="text"
+              name="byline"
+              value={byline}
+              onChange={(event) => setByline(event.target.value)}
+              maxLength={BYLINE_MAX}
+              placeholder="Ej. Nicolás Cardozo o Redacción Killa TV"
+              className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
+            />
+            <span className="font-mono text-[0.55rem] leading-relaxed text-fg-faint">
+              Si lo dejás vacío, la noticia se publicará sin firma.
+            </span>
+          </label>
         </div>
       </div>
 
@@ -400,6 +432,11 @@ export function ArticleForm({
             <p className="mt-3 text-sm leading-relaxed text-fg-muted">
               {excerpt || "La bajada aparecerá acá."}
             </p>
+            {bylinePreview ? (
+              <p className="mt-3 text-xs leading-snug text-fg-faint">
+                {bylinePreview}
+              </p>
+            ) : null}
           </div>
         </div>
 
