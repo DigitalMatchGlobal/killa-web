@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, Newspaper } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, Newspaper } from "lucide-react";
 
 import { ArticleCard } from "@/components/tv/article-card";
+import { InstagramIcon } from "@/components/tv/share-icons";
 import { TvFooter } from "@/components/tv/tv-footer";
 import { TvPublicHeader } from "@/components/tv/tv-public-header";
 import { getArticlesByCategory, getCategories } from "@/lib/editorial/queries";
@@ -18,6 +20,66 @@ import { getArticlesByCategory, getCategories } from "@/lib/editorial/queries";
 export const revalidate = 300;
 
 const PAGE_SIZE = 9;
+const KILLA_SPORTS_URL = "https://www.instagram.com/killasport.ar/";
+
+function SportsNetworkPromo({ hasArticles }: { hasArticles: boolean }) {
+  return (
+    <section
+      aria-labelledby="killa-sports-title"
+      className="relative mt-10 overflow-hidden rounded-[1.5rem] border border-red-500/25 bg-night/55 p-4 shadow-[0_24px_70px_-44px_rgba(239,29,37,0.65)] sm:p-6 lg:p-8"
+    >
+      <div
+        className="pointer-events-none absolute -right-24 -top-28 size-72 rounded-full bg-red-500/10 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -bottom-28 left-1/3 size-64 rounded-full bg-red-700/10 blur-3xl"
+        aria-hidden
+      />
+
+      <div className="relative grid items-center gap-6 md:grid-cols-[minmax(14rem,0.85fr)_minmax(0,1.15fr)] md:gap-8">
+        <div className="relative aspect-[1110/742] overflow-hidden rounded-[1.1rem] border border-white/10 bg-black shadow-xl">
+          <Image
+            src="/brand/killa-sports-concept.png"
+            alt="Killa Sports"
+            fill
+            sizes="(max-width: 767px) 100vw, 42vw"
+            className="object-cover"
+          />
+        </div>
+
+        <div className="px-1 pb-2 sm:px-2">
+          <p className="inline-flex items-center gap-2 font-mono text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-red-400">
+            <span className="size-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.7)]" aria-hidden />
+            La red deportiva de Killa
+          </p>
+          <h2
+            id="killa-sports-title"
+            className="mt-4 max-w-xl font-display text-[clamp(1.65rem,7vw,2.75rem)] font-bold leading-[1.04] tracking-[-0.035em] text-fg"
+          >
+            El deporte del norte se vive acá.
+          </h2>
+          <p className="mt-4 max-w-xl text-sm leading-relaxed text-fg-muted sm:text-base">
+            {hasArticles
+              ? "Seguí resultados, coberturas y toda la actualidad deportiva en nuestra comunidad de Instagram."
+              : "Mientras preparamos las primeras noticias deportivas del portal, seguí resultados, coberturas y toda la actualidad en nuestra cuenta de Instagram."}
+          </p>
+          <a
+            href={KILLA_SPORTS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Seguir a Killa Sports en Instagram (se abre en una pestaña nueva)"
+            className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#ed1c24] px-5 font-display text-sm font-bold text-white shadow-[0_16px_35px_-20px_rgba(237,28,36,0.9)] transition-[background-color,transform] active:scale-[0.98] hover:bg-[#d9141c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 sm:w-auto"
+          >
+            <InstagramIcon size={18} />
+            Seguir a @killasport.ar
+            <ExternalLink size={15} aria-hidden />
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export async function generateStaticParams() {
   const categories = await getCategories();
@@ -97,7 +159,7 @@ export default async function CategoryPage({
               <ArticleCard key={article.id} article={article} />
             ))}
           </div>
-        ) : (
+        ) : category.slug !== "deportes" ? (
           <div className="mt-10 rounded-[1.5rem] border border-line bg-night/45 px-6 py-9 sm:px-9 sm:py-11">
             <span className="grid size-12 place-items-center rounded-full border border-sand/25 bg-sand/[0.07] text-sand">
               <Newspaper size={20} aria-hidden />
@@ -123,7 +185,11 @@ export default async function CategoryPage({
                 ))}
             </div>
           </div>
-        )}
+        ) : null}
+
+        {category.slug === "deportes" ? (
+          <SportsNetworkPromo hasArticles={result.items.length > 0} />
+        ) : null}
 
         {result.pageCount > 1 ? (
           <nav
