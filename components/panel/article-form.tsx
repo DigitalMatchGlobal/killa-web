@@ -353,6 +353,13 @@ export function ArticleForm({
               </p>
             ) : null}
 
+            <p className="mt-3 rounded-xl border border-line bg-surface/35 px-4 py-3 text-xs leading-relaxed text-fg-muted">
+              <strong className="font-semibold text-fg">Encuadre editorial 16:9.</strong>{" "}
+              El portal respeta el formato 1600×900. Para que también funcione bien al compartir,
+              mantené logos, personas y textos dentro de la zona central, dejando cerca de un 10% de
+              margen en cada borde.
+            </p>
+
             <label className="mt-4 grid gap-2">
               <span className="flex items-center justify-between gap-3 font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
                 Texto alternativo
@@ -405,7 +412,7 @@ export function ArticleForm({
           Vista previa
         </p>
         <div className="overflow-hidden rounded-2xl border border-line bg-midnight">
-          <div className="relative aspect-[16/10] bg-surface">
+          <div className="relative aspect-video bg-surface">
             {imageUrl ? (
               <Image
                 src={imageUrl}
@@ -421,6 +428,16 @@ export function ArticleForm({
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/15 to-transparent" />
+            {imageUrl ? (
+              <div
+                className="pointer-events-none absolute inset-[9%] rounded-lg border border-dashed border-white/60 shadow-[0_0_0_1px_rgba(0,0,0,0.2)]"
+                aria-hidden
+              >
+                <span className="absolute right-1.5 top-1.5 rounded bg-black/65 px-1.5 py-0.5 font-mono text-[0.48rem] uppercase tracking-[0.08em] text-white/90">
+                  Zona segura
+                </span>
+              </div>
+            ) : null}
           </div>
           <div className="p-5">
             <p className="font-mono text-[0.55rem] uppercase tracking-[0.12em] text-sand">

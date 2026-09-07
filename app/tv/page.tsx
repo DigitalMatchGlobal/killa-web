@@ -74,14 +74,14 @@ function SecondaryStory({ article }: { article: Article }) {
         href={`/tv/noticias/${article.slug}`}
         className="-mx-2 grid grid-cols-[7rem_minmax(0,1fr)] gap-4 rounded-xl px-2 py-6 transition-[background-color,transform] duration-200 active:scale-[0.985] active:bg-surface/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sand sm:grid-cols-[9rem_minmax(0,1fr)] lg:mx-0 lg:grid-cols-1 lg:px-0 lg:hover:bg-transparent"
       >
-        <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-surface lg:aspect-[16/9]">
+        <div className="relative aspect-video overflow-hidden rounded-xl bg-surface">
           {article.featuredImageUrl ? (
             <Image
               src={article.featuredImageUrl}
               alt={article.imageAlt}
               fill
               sizes="(max-width: 640px) 112px, (max-width: 1024px) 144px, 360px"
-              className="object-cover transition-transform duration-700 group-hover:scale-[1.035]"
+              className="object-cover"
             />
           ) : null}
         </div>
@@ -147,7 +147,7 @@ export default async function KillaTvPage() {
                         alt={featured.imageAlt}
                         fill
                         sizes="(max-width: 1024px) 100vw, 820px"
-                        className="object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                        className="object-cover"
                         priority
                       />
                     ) : null}
