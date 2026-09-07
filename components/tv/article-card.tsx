@@ -8,8 +8,11 @@ import type { Article } from "@/lib/editorial/types";
 /** Tarjeta de nota. La comparten la portada y las páginas de sección. */
 export function ArticleCard({ article, sizes }: { article: Article; sizes?: string }) {
   return (
-    <article className="card group overflow-hidden">
-      <Link href={`/tv/noticias/${article.slug}`} className="block">
+    <article className="card group h-full overflow-hidden active:scale-[0.985]">
+      <Link
+        href={`/tv/noticias/${article.slug}`}
+        className="block h-full focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sand"
+      >
         <div className="relative aspect-[16/10] overflow-hidden border-b border-line bg-surface">
           {article.featuredImageUrl ? (
             <Image
@@ -32,7 +35,7 @@ export function ArticleCard({ article, sizes }: { article: Article; sizes?: stri
           <h3 className="mt-4 font-display text-xl font-semibold leading-tight tracking-tight">
             {article.title}
           </h3>
-          <p className="mt-3 text-sm text-fg-muted">{article.excerpt}</p>
+          <p className="mt-3 text-sm leading-relaxed text-fg-muted">{article.excerpt}</p>
           <span className="mt-6 inline-flex items-center gap-2 font-display text-sm font-semibold text-sand">
             Leer nota
             <ArrowUpRight size={15} aria-hidden />

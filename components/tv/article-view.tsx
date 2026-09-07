@@ -42,7 +42,8 @@ export function ArticleView({
       nombre: "WhatsApp",
       href: `https://wa.me/?text=${encodedUrl}`,
       Icono: WhatsAppIcon,
-      tinte: "hover:border-emerald-400/60 hover:text-emerald-300",
+      tinte:
+        "border-emerald-400/45 bg-emerald-400/10 text-fg hover:border-emerald-400/70 hover:bg-emerald-400/15",
     },
     {
       nombre: "Facebook",
