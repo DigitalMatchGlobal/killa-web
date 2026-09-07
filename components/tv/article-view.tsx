@@ -100,7 +100,7 @@ export function ArticleView({
         </div>
 
         {article.featuredImageUrl ? (
-          <div className="relative mt-8 aspect-[16/10] overflow-hidden rounded-[1.4rem] border border-line bg-surface sm:mt-10">
+          <div className="relative mt-8 aspect-video overflow-hidden rounded-[1.4rem] border border-line bg-surface sm:mt-10">
             <Image
               src={article.featuredImageUrl}
               alt={article.imageAlt}
@@ -111,7 +111,7 @@ export function ArticleView({
             />
           </div>
         ) : (
-          <div className="mt-8 grid aspect-[16/10] place-items-center rounded-[1.4rem] border border-dashed border-line-strong bg-surface/50 px-6 text-center text-sm text-fg-faint sm:mt-10">
+          <div className="mt-8 grid aspect-video place-items-center rounded-[1.4rem] border border-dashed border-line-strong bg-surface/50 px-6 text-center text-sm text-fg-faint sm:mt-10">
             Esta nota todavía no tiene imagen destacada. Es obligatoria para publicar.
           </div>
         )}

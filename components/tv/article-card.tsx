@@ -13,14 +13,14 @@ export function ArticleCard({ article, sizes }: { article: Article; sizes?: stri
         href={`/tv/noticias/${article.slug}`}
         className="block h-full focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sand"
       >
-        <div className="relative aspect-[16/10] overflow-hidden border-b border-line bg-surface">
+        <div className="relative aspect-video overflow-hidden border-b border-line bg-surface">
           {article.featuredImageUrl ? (
             <Image
               src={article.featuredImageUrl}
               alt={article.imageAlt}
               fill
               sizes={sizes ?? "(max-width: 1024px) 100vw, 400px"}
-              className="object-cover transition-transform duration-700 group-hover:scale-[1.035]"
+              className="object-cover"
             />
           ) : null}
         </div>
