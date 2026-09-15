@@ -26,7 +26,7 @@ export function ArticleCard({ article, sizes }: { article: Article; sizes?: stri
         </div>
         <div className="p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3 font-mono text-[0.58rem] uppercase tracking-[0.11em]">
-            <span className="text-sand">{article.category.name}</span>
+            <span className="text-sand">{article.subsection ?? article.category.name}</span>
             <span className="inline-flex items-center gap-1.5 text-fg-faint">
               <CalendarDays size={12} aria-hidden />
               {formatCardDate(article.publishedAt)}

@@ -41,6 +41,7 @@ import {
   type Category,
   type PanelArticle,
 } from "@/lib/editorial/types";
+import { subsectionsFor } from "@/lib/editorial/sections";
 
 /**
  * Formulario de alta y edición.
@@ -72,6 +73,7 @@ export function ArticleForm({
   const [excerpt, setExcerpt] = useState(article?.excerpt ?? "");
   const [body, setBody] = useState(article?.body ?? "");
   const [categoryId, setCategoryId] = useState(article?.categoryId ?? categories[0]?.id ?? "");
+  const [subsection, setSubsection] = useState(article?.subsection ?? "");
   const [priority, setPriority] = useState(String(article?.priority ?? 1));
   const [isFeatured, setIsFeatured] = useState(article?.isFeatured ?? false);
   const [imageAlt, setImageAlt] = useState(article?.imageAlt ?? "");
@@ -85,6 +87,7 @@ export function ArticleForm({
 
   const imageUrl = resolveFeaturedImageUrl(imagePath || null, supabaseOrigin);
   const selectedCategory = categories.find((category) => category.id === categoryId);
+  const subsectionOptions = subsectionsFor(selectedCategory?.slug ?? "");
   // Misma función que usa el portal: lo que se ve en la vista previa es
   // exactamente lo que se va a publicar, incluido el caso "sólo espacios",
   // que no muestra nada.
@@ -177,7 +180,10 @@ export function ArticleForm({
             <select
               name="categoryId"
               value={categoryId}
-              onChange={(event) => setCategoryId(event.target.value)}
+              onChange={(event) => {
+                setCategoryId(event.target.value);
+                setSubsection("");
+              }}
               className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
             >
               <option value="">Sin sección</option>
@@ -188,6 +194,24 @@ export function ArticleForm({
               ))}
             </select>
           </label>
+
+          {subsectionOptions.length > 0 ? (
+            <label className="grid gap-2">
+              <span className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
+                Subsección (opcional)
+              </span>
+              <select
+                name="subsection"
+                value={subsection}
+                onChange={(event) => setSubsection(event.target.value)}
+                className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
+              >
+                <option value="">Sin subsección</option>
+                {subsectionOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
+              <span className="text-xs text-fg-faint">Ayuda a organizar la sección sin sobrecargar el menú principal.</span>
+            </label>
+          ) : <input type="hidden" name="subsection" value="" />}
 
           <label className="grid gap-2">
             <span className="flex items-center justify-between gap-3 font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">

@@ -24,13 +24,12 @@ export function Coverage() {
             Área de cobertura
           </p>
           <h2 className="display mt-4 text-[clamp(2rem,7vw,3.25rem)]">
-            Tres corredores.
+            Dos corredores.
             <br />Una red que los conecta.
           </h2>
           <p className="mt-5 text-fg-muted">
-            Agrupamos la cobertura como Killa presta el servicio: Ramal Norte,
-            Valles Calchaquíes y Corredor Sur. Seleccioná una zona para explorar
-            sus localidades.
+            Agrupamos la cobertura como Killa presta el servicio: Ramal Norte y
+            Valles Calchaquíes. Seleccioná una zona para explorar sus localidades.
           </p>
         </header>
 
@@ -40,12 +39,12 @@ export function Coverage() {
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {offices.map((office, index) => (
             <article
-              key={office.city}
+              key={`${office.city}-${office.address}`}
               className="card card-topline reveal p-6"
               style={{ ["--reveal-delay" as string]: `${index * 80}ms` }}
             >
               <p className="font-mono text-[0.7rem] uppercase tracking-[0.16em] text-cyan">
-                {"kind" in office ? office.kind : "Oficina"}
+                {office.alias}
               </p>
               <h3 className="mt-2 font-display text-xl font-semibold tracking-tight text-fg">
                 {office.city}
@@ -53,18 +52,11 @@ export function Coverage() {
                   {office.province}
                 </span>
               </h3>
-              {"address" in office ? (
-                <p className="mt-4 flex items-start gap-2.5 text-sm text-fg-muted">
-                  <MapPin size={16} className="mt-0.5 shrink-0 text-fg-faint" aria-hidden />
-                  {office.address}
-                </p>
-              ) : (
-                <p className="mt-4 flex items-start gap-2.5 text-sm text-fg-muted">
-                  <MapPin size={16} className="mt-0.5 shrink-0 text-fg-faint" aria-hidden />
-                  Atención en la localidad
-                </p>
-              )}
-              {"phoneHref" in office && (
+              <p className="mt-4 flex items-start gap-2.5 text-sm text-fg-muted">
+                <MapPin size={16} className="mt-0.5 shrink-0 text-fg-faint" aria-hidden />
+                {office.address}
+              </p>
+              {"phoneHref" in office ? (
                 <a
                   href={office.phoneHref}
                   className="mt-2.5 flex items-center gap-2.5 font-mono text-sm text-fg-muted transition-colors duration-300 hover:text-cyan"
@@ -72,7 +64,8 @@ export function Coverage() {
                   <Phone size={16} className="shrink-0 text-fg-faint" aria-hidden />
                   {office.phone}
                 </a>
-              )}
+              ) : <p className="mt-2.5 font-mono text-xs text-fg-faint">{office.phone}</p>}
+              <p className="mt-3 text-xs leading-relaxed text-fg-faint">{office.hours}</p>
             </article>
           ))}
         </div>

@@ -14,17 +14,17 @@ import { getCategories, getTvHomeData } from "@/lib/editorial/queries";
 import { bylineLabel, type Article } from "@/lib/editorial/types";
 
 export const metadata: Metadata = {
-  title: "Killa TV",
+  title: "Killa TV – El Canal Oficial del Valle Calchaquí",
   description:
-    "Noticias y actualidad regional. El portal editorial de Killa TV para las comunidades del norte argentino.",
+    "Noticias, deporte y turismo del Valle Calchaquí y todo el NOA.",
   alternates: { canonical: "/tv" },
   openGraph: {
     type: "website",
     locale: "es_AR",
     url: "/tv",
-    title: "Killa TV — La señal del norte",
+    title: "Killa TV – El Canal Oficial del Valle Calchaquí",
     description:
-      "Noticias, deporte, turismo y actualidad de las comunidades del norte argentino.",
+      "Noticias, deporte y turismo del Valle Calchaquí y todo el NOA.",
     images: [
       {
         url: "/og-tv.png",
@@ -36,9 +36,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Killa TV — La señal del norte",
+    title: "Killa TV – El Canal Oficial del Valle Calchaquí",
     description:
-      "Noticias, deporte, turismo y actualidad de las comunidades del norte argentino.",
+      "Noticias, deporte y turismo del Valle Calchaquí y todo el NOA.",
     images: ["/og-tv.png"],
   },
 };
@@ -87,7 +87,7 @@ function SecondaryStory({ article }: { article: Article }) {
         </div>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs uppercase tracking-[0.1em]">
-            <span className="font-semibold text-sand">{article.category.name}</span>
+            <span className="font-semibold text-sand">{article.subsection ?? article.category.name}</span>
             <span className="text-fg-faint">{formatCardDate(article.publishedAt)}</span>
           </div>
           <h3 className="mt-2 font-display text-base font-semibold leading-[1.2] tracking-tight transition-colors group-hover:text-sand sm:text-lg lg:text-xl">
@@ -159,7 +159,7 @@ export default async function KillaTvPage() {
 
                   <div className="p-5 sm:p-6">
                     <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.11em]">
-                      <span className="font-bold text-sand">{featured.category.name}</span>
+                      <span className="font-bold text-sand">{featured.subsection ?? featured.category.name}</span>
                       <span className="text-line-strong" aria-hidden>•</span>
                       <span className="inline-flex items-center gap-1.5 text-fg-faint">
                         <CalendarDays size={13} aria-hidden />

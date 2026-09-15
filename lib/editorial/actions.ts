@@ -103,6 +103,7 @@ function readDraftForm(formData: FormData) {
     excerpt: formString(formData, "excerpt"),
     body: formString(formData, "body"),
     categoryId: formString(formData, "categoryId"),
+    subsection: formString(formData, "subsection"),
     imageAlt: formString(formData, "imageAlt"),
     byline: formString(formData, "byline"),
     featuredImagePath: formString(formData, "featuredImagePath"),
@@ -138,6 +139,7 @@ export async function createDraftAction(
       excerpt: input.excerpt,
       body: input.body,
       category_id: input.categoryId,
+      subsection: input.subsection,
       featured_image_path: input.featuredImagePath,
       image_alt: input.imageAlt,
       byline: input.byline,
@@ -186,6 +188,7 @@ export async function saveArticleAction(
       excerpt: input.excerpt,
       body: input.body,
       category_id: input.categoryId,
+      subsection: input.subsection,
       featured_image_path: input.featuredImagePath,
       image_alt: input.imageAlt,
       // Vaciar el campo guarda null y retira la firma del portal.

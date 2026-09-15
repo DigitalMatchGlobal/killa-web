@@ -4,6 +4,7 @@ import { ArrowUpRight, Play } from "lucide-react";
 import { ScrollToTop } from "@/components/layout/scroll-to-top";
 import { PoweredBy } from "@/components/brand/powered-by";
 import { TvLogo } from "@/components/tv/tv-logo";
+import { TV_SECTIONS } from "@/lib/editorial/sections";
 
 const youtubeLive = "https://www.youtube.com/@killatvok/streams";
 
@@ -18,8 +19,8 @@ export function TvFooter() {
                 <TvLogo />
               </Link>
               <p className="mt-4 max-w-md text-sm leading-relaxed text-fg-muted">
-                Noticias, historias y actualidad de las comunidades del norte argentino.
-                Una señal cercana, hecha desde el territorio.
+                <span className="font-semibold text-fg">El Canal Oficial del Valle Calchaquí.</span>{" "}
+                Noticias, deporte y turismo del Valle Calchaquí y todo el NOA.
               </p>
             </div>
 
@@ -29,9 +30,9 @@ export function TvFooter() {
               </p>
               <nav className="mt-4 grid gap-2.5 text-sm text-fg-muted" aria-label="Secciones del portal">
                 <Link href="/tv" className="transition-colors hover:text-sand">Portada</Link>
-                <Link href="/tv/categoria/noticias" className="transition-colors hover:text-sand">Noticias</Link>
-                <Link href="/tv/categoria/deportes" className="transition-colors hover:text-sand">Deportes</Link>
-                <Link href="/tv/categoria/turismo" className="transition-colors hover:text-sand">Turismo</Link>
+                {TV_SECTIONS.map((section) => (
+                  <Link key={section.slug} href={`/tv/categoria/${section.slug}`} className="transition-colors hover:text-sand">{section.name}</Link>
+                ))}
               </nav>
             </div>
 

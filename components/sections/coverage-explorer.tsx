@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils";
 const zoneStyles = {
   cyan: { selected: "border-cyan/70 bg-cyan/[0.11]", kicker: "text-cyan", dot: "bg-cyan" },
   sand: { selected: "border-sand/70 bg-sand/[0.11]", kicker: "text-sand", dot: "bg-sand" },
-  mint: { selected: "border-emerald-400/60 bg-emerald-400/[0.1]", kicker: "text-emerald-300", dot: "bg-emerald-300" },
 } as const;
 
 function normalize(value: string) {
@@ -84,6 +83,7 @@ export function CoverageExplorer() {
                 ref={inputRef}
                 id="coverage-search"
                 type="search"
+                role="combobox"
                 value={query}
                 onChange={(event) => {
                   setQuery(event.target.value);
@@ -161,7 +161,7 @@ export function CoverageExplorer() {
         </p>
       </div>
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-3" role="tablist" aria-label="Zonas de servicio de Killa">
+      <div className="mt-3 grid gap-2 sm:grid-cols-2" role="tablist" aria-label="Zonas de servicio de Killa">
         {serviceZones.map((zone, index) => {
           const isSelected = zone.id === activeZone;
           const style = zoneStyles[zone.accent];

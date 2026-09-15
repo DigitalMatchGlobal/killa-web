@@ -9,6 +9,7 @@ import { InstagramIcon } from "@/components/tv/share-icons";
 import { TvFooter } from "@/components/tv/tv-footer";
 import { TvPublicHeader } from "@/components/tv/tv-public-header";
 import { getArticlesByCategory, getCategories } from "@/lib/editorial/queries";
+import { subsectionsFor } from "@/lib/editorial/sections";
 
 /**
  * Sección (categoría) del portal.
@@ -116,7 +117,7 @@ export default async function CategoryPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ pagina?: string }>;
+  searchParams: Promise<{ pagina?: string; subseccion?: string }>;
 }) {
   const [{ slug }, query] = await Promise.all([params, searchParams]);
 
@@ -125,9 +126,12 @@ export default async function CategoryPage({
   if (!category) notFound();
 
   const page = Number.parseInt(query.pagina ?? "1", 10);
+  const subsectionOptions = subsectionsFor(slug);
+  const activeSubsection = subsectionOptions.find((item) => item === query.subseccion) ?? null;
   const result = await getArticlesByCategory(slug, {
     page: Number.isFinite(page) && page > 0 ? page : 1,
     pageSize: PAGE_SIZE,
+    subsection: activeSubsection,
   });
 
   return (
@@ -144,6 +148,14 @@ export default async function CategoryPage({
         </Link>
         <p className="eyebrow mt-8 flex w-fit text-sand">Sección</p>
         <h1 className="display mt-5 text-[clamp(2.4rem,9vw,4.6rem)]">{category.name}</h1>
+        {subsectionOptions.length > 0 ? (
+          <nav className="mt-6 flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label={`Subsecciones de ${category.name}`}>
+            <Link href={`/tv/categoria/${slug}`} className={`shrink-0 rounded-full border px-4 py-2 text-sm ${!activeSubsection ? "border-sand bg-sand/[0.1] text-sand" : "border-line text-fg-muted"}`}>Todas</Link>
+            {subsectionOptions.map((item) => (
+              <Link key={item} href={`/tv/categoria/${slug}?subseccion=${encodeURIComponent(item)}`} className={`shrink-0 rounded-full border px-4 py-2 text-sm ${activeSubsection === item ? "border-sand bg-sand/[0.1] text-sand" : "border-line text-fg-muted"}`}>{item}</Link>
+            ))}
+          </nav>
+        ) : null}
         {result.total > 0 ? (
           <p className="mt-4 text-sm text-fg-muted">
             {result.total} {result.total === 1 ? "nota publicada" : "notas publicadas"}.
@@ -195,7 +207,7 @@ export default async function CategoryPage({
           >
             {result.page > 1 ? (
               <Link
-                href={`/tv/categoria/${category.slug}?pagina=${result.page - 1}`}
+                href={`/tv/categoria/${category.slug}?pagina=${result.page - 1}${activeSubsection ? `&subseccion=${encodeURIComponent(activeSubsection)}` : ""}`}
                 className="btn btn-ghost"
               >
                 <ArrowLeft size={15} aria-hidden />
@@ -209,7 +221,7 @@ export default async function CategoryPage({
             </span>
             {result.page < result.pageCount ? (
               <Link
-                href={`/tv/categoria/${category.slug}?pagina=${result.page + 1}`}
+                href={`/tv/categoria/${category.slug}?pagina=${result.page + 1}${activeSubsection ? `&subseccion=${encodeURIComponent(activeSubsection)}` : ""}`}
                 className="btn btn-ghost"
               >
                 Siguientes

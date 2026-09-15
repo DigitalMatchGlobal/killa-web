@@ -5,6 +5,7 @@ import { createSupabasePublicClient } from "@/lib/supabase/server";
 
 import { fallbackArticles } from "./fallback";
 import { pickFeatured, pickLatest } from "./ranking";
+import { TV_SECTIONS } from "./sections";
 import {
   mapArticle,
   paginate,
@@ -37,7 +38,7 @@ import {
  * `profiles` esté cerrada). La firma se lee de `byline` y de ningún otro lado.
  */
 const ARTICLE_COLUMNS = `
-  id, title, slug, excerpt, body, category_id, featured_image_path, image_alt,
+  id, title, slug, excerpt, body, category_id, subsection, featured_image_path, image_alt,
   status, priority, is_featured, byline, published_at, created_at, updated_at,
   category:categories ( name, slug )
 `;
@@ -51,7 +52,7 @@ const ARTICLE_COLUMNS = `
  * categoría" en algo que funciona.
  */
 const ARTICLE_COLUMNS_CATEGORY_INNER = `
-  id, title, slug, excerpt, body, category_id, featured_image_path, image_alt,
+  id, title, slug, excerpt, body, category_id, subsection, featured_image_path, image_alt,
   status, priority, is_featured, byline, published_at, created_at, updated_at,
   category:categories!inner ( name, slug )
 `;
@@ -170,7 +171,7 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
 /** Notas publicadas de una sección. */
 export async function getArticlesByCategory(
   categorySlug: string,
-  options: { page?: number; pageSize?: number } = {},
+  options: { page?: number; pageSize?: number; subsection?: string | null } = {},
 ): Promise<Paginated<Article>> {
   const { page, pageSize, from, to } = rangeFor(
     options.page ?? 1,
@@ -180,18 +181,22 @@ export async function getArticlesByCategory(
   if (!hasSupabaseConfig()) {
     warnFallback("getArticlesByCategory");
     const all = pickLatest(fallbackArticles).filter(
-      (article) => article.category.slug === categorySlug,
+      (article) => article.category.slug === categorySlug && (!options.subsection || article.subsection === options.subsection),
     );
     return paginate(all.slice(from, to + 1), all.length, page, pageSize);
   }
 
   const supabase = createSupabasePublicClient();
-  const { data, error, count } = await supabase
+  let query = supabase
     .from("articles")
     .select(ARTICLE_COLUMNS_CATEGORY_INNER, { count: "exact" })
     .eq("status", "published")
     // El filtro va sobre el alias del embed, no sobre el nombre de la tabla.
-    .eq("category.slug", categorySlug)
+    .eq("category.slug", categorySlug);
+
+  if (options.subsection) query = query.eq("subsection", options.subsection);
+
+  const { data, error, count } = await query
     .order("published_at", { ascending: false })
     .range(from, to);
 
@@ -227,6 +232,9 @@ export async function getCategories(): Promise<Category[]> {
       { id: "fallback-noticias", name: "Noticias", slug: "noticias" },
       { id: "fallback-deportes", name: "Deportes", slug: "deportes" },
       { id: "fallback-turismo", name: "Turismo", slug: "turismo" },
+      { id: "fallback-economia", name: "Economía", slug: "economia" },
+      { id: "fallback-cultura", name: "Cultura", slug: "cultura" },
+      { id: "fallback-tecnologia", name: "Tecnología", slug: "tecnologia" },
     ];
   }
 
@@ -237,7 +245,9 @@ export async function getCategories(): Promise<Category[]> {
     .order("name", { ascending: true });
 
   if (error) throw new Error(`No se pudieron leer las categorías: ${error.message}`);
-  return (data ?? []) as Category[];
+  const categories = (data ?? []) as Category[];
+  const order = new Map<string, number>(TV_SECTIONS.map((section, index) => [section.slug, index]));
+  return categories.sort((a, b) => (order.get(a.slug) ?? 99) - (order.get(b.slug) ?? 99));
 }
 
 /**

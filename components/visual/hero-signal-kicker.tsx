@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 const LOCALITIES = ["Yuto", "Cachi", "Cafayate", "Santa María"] as const;
 const SIGNAL_CYCLE_MS = 2800;
@@ -38,7 +39,15 @@ export function HeroSignalKicker() {
     >
       <div className="hero-signal-kicker__meta" aria-hidden>
         <span className="node-dot" />
-        <span>Infraestructura propia</span>
+        <Image
+          src="/brand/killa-internet.png"
+          alt=""
+          width={2160}
+          height={825}
+          className="h-auto w-28 object-contain"
+          priority
+        />
+        <span className="sr-only">Infraestructura propia</span>
         <span className="hero-signal-kicker__ticks">
           {LOCALITIES.map((locality, index) => (
             <i

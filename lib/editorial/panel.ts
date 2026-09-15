@@ -28,7 +28,7 @@ import {
  */
 
 const PANEL_COLUMNS = `
-  id, title, slug, excerpt, body, category_id, featured_image_path, image_alt,
+  id, title, slug, excerpt, body, category_id, subsection, featured_image_path, image_alt,
   status, priority, is_featured, byline, author_id, updated_by, published_at, created_at, updated_at,
   category:categories ( name, slug ),
   author:profiles!articles_author_id_fkey ( display_name )

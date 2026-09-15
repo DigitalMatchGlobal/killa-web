@@ -7,6 +7,8 @@
  * se reimplementa distinto en cada página.
  */
 
+import { normalizeSubsection } from "./sections";
+
 export const ARTICLE_STATUSES = ["draft", "published", "archived"] as const;
 export type ArticleStatus = (typeof ARTICLE_STATUSES)[number];
 
@@ -26,6 +28,7 @@ export type Article = {
   excerpt: string;
   body: string;
   category: ArticleCategory;
+  subsection: string | null;
   featuredImageUrl: string;
   imageAlt: string;
   status: ArticleStatus;
@@ -100,6 +103,7 @@ export type ArticleRow = {
   excerpt: string | null;
   body: string | null;
   category_id: string | null;
+  subsection?: string | null;
   featured_image_path: string | null;
   image_alt: string | null;
   status: string;
@@ -191,6 +195,7 @@ export function mapArticle(row: ArticleRow, supabaseOrigin: string): Article {
       const category = oneOf(row.category);
       return category ? { name: category.name, slug: category.slug } : ORPHAN_CATEGORY;
     })(),
+    subsection: normalizeSubsection(row.subsection),
     featuredImageUrl: resolveFeaturedImageUrl(row.featured_image_path, supabaseOrigin),
     imageAlt: row.image_alt ?? "",
     status: isArticleStatus(row.status) ? row.status : "draft",

@@ -35,7 +35,6 @@ const provinceLabels = [
 const zoneLabels: Record<ServiceZoneId, { x: number; y: number }> = {
   "ramal-norte": { x: 492, y: 206 },
   "valles-calchaquies": { x: 286, y: 405 },
-  "corredor-sur": { x: 328, y: 655 },
 };
 
 const labelPositions: Record<

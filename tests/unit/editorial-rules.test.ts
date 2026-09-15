@@ -15,6 +15,7 @@ import {
   type Article,
 } from "@/lib/editorial/types";
 import { fallbackArticles } from "@/lib/editorial/fallback";
+import { normalizeSubsection, subsectionsFor } from "@/lib/editorial/sections";
 
 /**
  * Reglas que no necesitan base: ranking de portada, saneamiento, validación de
@@ -32,6 +33,7 @@ function article(overrides: Partial<Article> & { id: string }): Article {
     excerpt: "",
     body: "",
     category: { name: "Noticias", slug: "noticias" },
+    subsection: overrides.subsection ?? null,
     featuredImageUrl: "",
     imageAlt: "",
     status: overrides.status ?? "published",
@@ -93,6 +95,19 @@ describe("portada: destacada manual y fecha", () => {
     const b = article({ id: "bbb" });
     expect(compareEditorialRank(a, b)).toBeLessThan(0);
     expect(compareEditorialRank(b, a)).toBeGreaterThan(0);
+  });
+});
+
+describe("jerarquía editorial", () => {
+  it("normaliza una subsección opcional sin reservar cadenas vacías", () => {
+    expect(normalizeSubsection("  Obras   Públicas ")).toBe("Obras Públicas");
+    expect(normalizeSubsection("   ")).toBeNull();
+  });
+
+  it("publica las subsecciones acordadas sólo dentro de su sección", () => {
+    expect(subsectionsFor("noticias")).toContain("Educación");
+    expect(subsectionsFor("deportes")).toContain("Hockey");
+    expect(subsectionsFor("turismo")).toEqual([]);
   });
 });
 

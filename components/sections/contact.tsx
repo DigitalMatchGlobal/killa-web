@@ -98,7 +98,7 @@ export function Contact() {
                 <li key={office.city} className="text-sm">
                   <p className="text-fg">{office.city}</p>
                   <p className="text-fg-muted">
-                    {"address" in office ? office.address : `${office.province} · ${office.kind}`}
+                    {office.address}
                   </p>
                   {"phoneHref" in office && (
                     <a

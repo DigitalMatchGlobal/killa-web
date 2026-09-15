@@ -53,6 +53,14 @@ export const articleDraftSchema = z.object({
     (value) => (value === "" || value === undefined ? null : value),
     z.string().uuid("Categoría inválida.").nullable(),
   ),
+  subsection: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return null;
+      const clean = sanitizeSingleLine(value);
+      return clean.length > 0 ? clean : null;
+    },
+    z.string().max(80, "La subsección no puede pasar de 80 caracteres.").nullable(),
+  ),
   imageAlt: z.preprocess(
     cleanLine,
     z.string().max(IMAGE_ALT_MAX, `El texto alternativo no puede pasar de ${IMAGE_ALT_MAX} caracteres.`),

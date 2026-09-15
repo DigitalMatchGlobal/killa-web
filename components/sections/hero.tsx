@@ -3,7 +3,7 @@ import { ArrowDown, ArrowRight } from "lucide-react";
 import { HeroSignalKicker } from "@/components/visual/hero-signal-kicker";
 import { NetworkCorridor } from "@/components/visual/network-corridor";
 import { LunarSignature } from "@/components/visual/lunar-signature";
-import { site, whatsappLink } from "@/lib/site";
+import { whatsappLink } from "@/lib/site";
 
 /**
  * Hero.
@@ -65,19 +65,12 @@ export function Hero() {
         <div className="hero-content relative flex flex-1 flex-col items-start py-4 lg:order-1 lg:py-20">
           <HeroSignalKicker />
 
-          <h1 className="hero-title display mt-4 text-[clamp(2.15rem,8.6vw,4.6rem)] lg:mt-5 lg:text-[clamp(3.2rem,4.6vw,4.9rem)]">
-            Internet estable
-            <br />
-            <span className="text-cyan">donde otros</span>
-            <br />
-            no llegan.
+          <h1 className="hero-title display mt-4 max-w-[12ch] text-[clamp(2.15rem,8.6vw,4.6rem)] lg:mt-5 lg:text-[clamp(3.2rem,4.6vw,4.9rem)]">
+            Tu empresa amiga, <span className="text-cyan">para estar más conectados.</span>
           </h1>
 
           <p className="hero-copy hero-copy-long mt-5 hidden max-w-[46ch] text-[0.975rem] leading-[1.6] text-fg-muted sm:text-lg lg:mt-6 lg:block">
-            {site.yearsInBusiness} años conectando el norte argentino con redes
-            propias, tecnología y un equipo que vive acá —{" "}
-            <span className="text-fg">de Jujuy a Catamarca</span>, a través de los
-            Valles Calchaquíes.
+            Con presencia comercial y técnica en cada localidad donde prestamos servicio.
           </p>
 
           <a
