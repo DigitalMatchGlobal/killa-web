@@ -13,10 +13,36 @@ export function Header() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 72);
-    onScroll();
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const offset = Math.max(
+        window.scrollY,
+        window.pageYOffset,
+        document.documentElement.scrollTop,
+      );
+      const threshold = window.matchMedia("(max-width: 767px)").matches ? 32 : 72;
+      setScrolled(offset > threshold);
+    };
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("touchmove", onScroll, { passive: true });
+    window.addEventListener("wheel", onScroll, { passive: true });
+    document.addEventListener("scroll", onScroll, { passive: true, capture: true });
+    window.visualViewport?.addEventListener("scroll", onScroll, { passive: true });
+    const poller = window.setInterval(update, 250);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("touchmove", onScroll);
+      window.removeEventListener("wheel", onScroll);
+      document.removeEventListener("scroll", onScroll, { capture: true });
+      window.visualViewport?.removeEventListener("scroll", onScroll);
+      window.clearInterval(poller);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   // Con el menú abierto el fondo no se mueve, y Escape lo cierra.
@@ -36,16 +62,14 @@ export function Header() {
     <>
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter,opacity,transform] duration-500 ease-out",
+          "site-header fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter,opacity,transform] duration-500 ease-out",
           scrolled || open
             ? "translate-y-0 border-b border-line bg-midnight/85 opacity-100 backdrop-blur-xl"
             : "pointer-events-none -translate-y-full border-b border-transparent bg-transparent opacity-0",
         )}
-        aria-hidden={!scrolled && !open}
-        inert={!scrolled && !open ? true : undefined}
       >
         <div className="shell flex h-[72px] items-center justify-between gap-4">
-          <a href="#top" aria-label="Killa Internet — inicio" className={cn("shrink-0 transition-[transform,opacity] duration-500", scrolled || open ? "scale-100 opacity-100" : "scale-75 opacity-0")}>
+          <a href="#top" aria-label="Killa Internet — inicio" className={cn("site-header__brand shrink-0 transition-[transform,opacity] duration-500", scrolled || open ? "scale-100 opacity-100" : "scale-75 opacity-0")}>
             <Logo priority />
           </a>
 

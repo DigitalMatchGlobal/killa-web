@@ -43,13 +43,13 @@ export function Hero() {
         aria-hidden
       />
 
-      <div className="shell relative flex flex-1 flex-col lg:grid lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-8">
+      <div className="shell relative flex flex-1 flex-col lg:grid lg:grid-cols-[1.05fr_1fr] lg:items-start lg:gap-8">
         <LunarSignature />
         {/*
           En celular el mapa es fondo absoluto de todo el hero. A partir de lg
           vuelve al flujo y ocupa la segunda columna de la grilla.
         */}
-        <div className="hero-map pointer-events-none absolute -inset-x-5 bottom-0 top-[8.4rem] -z-10 translate-x-[2.8rem] sm:top-[9rem] sm:translate-x-[3.6rem] lg:relative lg:inset-auto lg:order-2 lg:h-[74svh] lg:w-full lg:translate-x-0">
+        <div className="hero-map pointer-events-none absolute -inset-x-5 bottom-0 top-[8.4rem] -z-10 translate-x-[2.8rem] sm:top-[9rem] sm:translate-x-[3.6rem] lg:relative lg:inset-auto lg:order-2 lg:mt-10 lg:h-[78svh] lg:w-full lg:translate-x-0">
           <NetworkCorridor className="absolute inset-0 h-full w-full" />
           {/* Gradiente lateral: protege el CTA sin apagar la cartografía. */}
           <div
@@ -62,7 +62,7 @@ export function Hero() {
           />
         </div>
 
-        <div className="hero-content relative flex flex-1 flex-col items-start py-4 lg:order-1 lg:py-20">
+        <div className="hero-content relative flex flex-1 flex-col items-start py-3 lg:order-1 lg:pb-14 lg:pt-12">
           <HeroSignalKicker />
 
           <h1 className="hero-title display mt-4 max-w-[12ch] text-[clamp(2.15rem,8.6vw,4.6rem)] lg:mt-5 lg:text-[clamp(3.2rem,4.6vw,4.9rem)]">
