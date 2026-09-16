@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import type { CSSProperties } from "react";
 
 const LOCALITIES = ["Yuto", "Cachi", "Cafayate", "Santa María"] as const;
 const SIGNAL_CYCLE_MS = 2800;
@@ -16,6 +17,7 @@ const SIGNAL_CYCLE_MS = 2800;
  */
 export function HeroSignalKicker() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     const reducedMotion = window.matchMedia(
@@ -31,11 +33,33 @@ export function HeroSignalKicker() {
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setScrollProgress(Math.min(window.scrollY / 80, 1));
+    };
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
   return (
     <div
       className="hero-signal-kicker"
       role="img"
       aria-label="Infraestructura propia de Killa conectando localidades del norte argentino"
+      style={{
+        "--brand-opacity": 1 - scrollProgress,
+        "--brand-y": `${scrollProgress * -32}px`,
+        "--brand-scale": 1 - scrollProgress * 0.18,
+      } as CSSProperties}
     >
       <div className="hero-signal-kicker__meta" aria-hidden>
         <span className="node-dot" />
@@ -44,7 +68,7 @@ export function HeroSignalKicker() {
           alt=""
           width={2160}
           height={825}
-          className="h-auto w-28 object-contain"
+          className="hero-signal-kicker__logo h-auto object-contain"
           priority
         />
         <span className="sr-only">Infraestructura propia</span>

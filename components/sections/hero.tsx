@@ -29,7 +29,7 @@ export function Hero() {
   return (
     <section
       id="top"
-      className="hero-frame relative isolate flex flex-col overflow-hidden pt-[72px]"
+      className="hero-frame relative isolate flex flex-col overflow-hidden pt-4 sm:pt-6 lg:pt-0"
     >
       {/* Fondos: trama de tendido + luz de luna. */}
       <div className="absolute inset-0 -z-20 grid-weave opacity-[0.5]" aria-hidden />

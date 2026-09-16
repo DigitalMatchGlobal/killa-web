@@ -13,7 +13,7 @@ export function Header() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    const onScroll = () => setScrolled(window.scrollY > 72);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -36,14 +36,16 @@ export function Header() {
     <>
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-500",
+          "fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter,opacity,transform] duration-500 ease-out",
           scrolled || open
-            ? "border-b border-line bg-midnight/85 backdrop-blur-xl"
-            : "border-b border-transparent bg-transparent",
+            ? "translate-y-0 border-b border-line bg-midnight/85 opacity-100 backdrop-blur-xl"
+            : "pointer-events-none -translate-y-full border-b border-transparent bg-transparent opacity-0",
         )}
+        aria-hidden={!scrolled && !open}
+        inert={!scrolled && !open ? true : undefined}
       >
         <div className="shell flex h-[72px] items-center justify-between gap-4">
-          <a href="#top" aria-label="Killa Internet — inicio" className="shrink-0">
+          <a href="#top" aria-label="Killa Internet — inicio" className={cn("shrink-0 transition-[transform,opacity] duration-500", scrolled || open ? "scale-100 opacity-100" : "scale-75 opacity-0")}>
             <Logo priority />
           </a>
 
