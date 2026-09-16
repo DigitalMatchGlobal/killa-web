@@ -65,7 +65,7 @@ export function Header() {
           "site-header fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,backdrop-filter,opacity,transform] duration-500 ease-out",
           scrolled || open
             ? "translate-y-0 border-b border-line bg-midnight/85 opacity-100 backdrop-blur-xl"
-            : "pointer-events-none -translate-y-full border-b border-transparent bg-transparent opacity-0",
+            : "-translate-y-full border-b border-transparent bg-transparent opacity-0",
         )}
       >
         <div className="shell flex h-[72px] items-center justify-between gap-4">
