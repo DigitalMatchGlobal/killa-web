@@ -153,6 +153,12 @@ body {
 :root[data-theme="light"] .brand-logo-dark { display: none; }
 :root[data-theme="light"] .brand-logo-light { display: block; }
 
+/* El logo grande del hero también alterna de variante: blanco sobre el
+ * mapa nocturno y lettering oscuro sobre la superficie clara. */
+.hero-signal-kicker__logo--light { display: none; }
+:root[data-theme="light"] .hero-signal-kicker__logo--dark { display: none; }
+:root[data-theme="light"] .hero-signal-kicker__logo--light { display: block; }
+
 /* El PNG oficial de Killa TV viene sobre blanco. El modo de mezcla integra
  * ese fondo a cada tema y conserva cian + blanco/negro sin recrear la marca. */
 .tv-logo-image {

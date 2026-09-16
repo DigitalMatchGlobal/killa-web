@@ -9,14 +9,19 @@ import { cn } from "@/lib/utils";
  */
 export function Logo({ className, priority }: { className?: string; priority?: boolean }) {
   return (
-    <span className={cn("relative block h-9 w-[7.9rem] sm:h-10 sm:w-[8.8rem]", className)}>
+    <span
+      className={cn(
+        "relative block h-10 w-[8.25rem] overflow-visible sm:h-11 sm:w-[9.1rem]",
+        className,
+      )}
+    >
       <Image
         src="/brand/killa-internet.png"
         alt="Killa Internet"
         width={2160}
         height={825}
         priority={priority}
-        className="brand-logo-dark absolute inset-0 h-full w-full object-contain"
+        className="brand-logo-dark absolute -inset-y-1 inset-x-0 h-[calc(100%+0.5rem)] w-full object-contain"
       />
       <Image
         src="/brand/killa-official.png"
@@ -24,7 +29,7 @@ export function Logo({ className, priority }: { className?: string; priority?: b
         width={1600}
         height={533}
         priority={priority}
-        className="brand-logo-light absolute inset-0 hidden h-full w-full object-contain"
+        className="brand-logo-light absolute -inset-y-1 inset-x-0 hidden h-[calc(100%+0.5rem)] w-full object-contain"
       />
     </span>
   );

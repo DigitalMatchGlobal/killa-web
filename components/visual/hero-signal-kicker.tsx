@@ -68,7 +68,15 @@ export function HeroSignalKicker() {
           alt=""
           width={2160}
           height={825}
-          className="hero-signal-kicker__logo h-auto object-contain"
+          className="hero-signal-kicker__logo hero-signal-kicker__logo--dark h-auto object-contain"
+          priority
+        />
+        <Image
+          src="/brand/killa-official.png"
+          alt=""
+          width={1600}
+          height={533}
+          className="hero-signal-kicker__logo hero-signal-kicker__logo--light hidden h-auto object-contain"
           priority
         />
         <span className="sr-only">Infraestructura propia</span>
