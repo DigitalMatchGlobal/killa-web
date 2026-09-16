@@ -159,16 +159,28 @@ body {
 :root[data-theme="light"] .hero-signal-kicker__logo--dark { display: none; }
 :root[data-theme="light"] .hero-signal-kicker__logo--light { display: block; }
 
-/* El PNG oficial de Killa TV viene sobre blanco. El modo de mezcla integra
- * ese fondo a cada tema y conserva cian + blanco/negro sin recrear la marca. */
-.tv-logo-image {
-  filter: invert(1) hue-rotate(180deg);
-  mix-blend-mode: screen;
-}
+/* Killa TV: variantes oficiales dedicadas por fondo. El default (tema oscuro)
+ * muestra el lettering blanco; el claro, el negro. Misma mecánica que el
+ * logotipo de Killa Internet, sin filtros que degraden el cian. */
+.tv-logo-wordmark--light { display: none; }
+:root[data-theme="light"] .tv-logo-wordmark--dark { display: none; }
+:root[data-theme="light"] .tv-logo-wordmark--light { display: inline-block; }
 
-:root[data-theme="light"] .tv-logo-image {
-  filter: none;
-  mix-blend-mode: multiply;
+/* El símbolo también alterna: en oscuro las ondas van en blanco (variante
+ * negativa del manual) y en claro en negro, para que siempre contrasten. */
+.tv-logo-symbol--light { display: none; }
+:root[data-theme="light"] .tv-logo-symbol--dark { display: none; }
+:root[data-theme="light"] .tv-logo-symbol--light { display: inline-block; }
+
+/* Panel "tu localidad" de la sección de planes: reanima en cada selección
+ * (React lo remonta al cambiar el `key`), para que la elección se sienta viva. */
+@keyframes locality-panel-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.locality-panel { animation: locality-panel-in 0.34s ease both; }
+@media (prefers-reduced-motion: reduce) {
+  .locality-panel { animation: none; }
 }
 
 .hero-frame {

@@ -32,7 +32,7 @@ const mono = JetBrains_Mono({
 
 const title = "Killa Comunicaciones — Internet, tecnología y medios en el norte";
 const description =
-  "Trece años conectando el norte argentino. Internet para hogares, soluciones de telecomunicaciones, producción audiovisual y Killa TV.";
+  "Más de 18 años conectando el norte argentino. Internet para hogares, soluciones de telecomunicaciones, producción audiovisual y Killa TV.";
 
 /**
  * En Vercel las URLs de Open Graph deben apuntar al deployment que realmente

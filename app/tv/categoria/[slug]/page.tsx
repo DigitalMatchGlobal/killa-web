@@ -35,13 +35,13 @@ function SportsNetworkPromo({ hasArticles }: { hasArticles: boolean }) {
       />
 
       <div className="relative grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-x-4 gap-y-3 sm:grid-cols-[8rem_minmax(0,1fr)] md:grid-cols-[10rem_minmax(0,1fr)_auto] md:gap-5">
-        <div className="relative aspect-[3/2] overflow-hidden rounded-xl border border-white/10 bg-black shadow-lg">
+        <div className="relative aspect-[3/2] overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] p-1.5 shadow-lg">
           <Image
-            src="/brand/killa-sports-concept.png"
+            src="/brand/killa-sports.png"
             alt="Killa Sports"
             fill
             sizes="(max-width: 639px) 104px, (max-width: 767px) 128px, 160px"
-            className="object-cover"
+            className="object-contain"
           />
         </div>
 

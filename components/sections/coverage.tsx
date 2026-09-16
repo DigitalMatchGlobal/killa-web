@@ -1,8 +1,9 @@
-import { MapPin, Phone } from "lucide-react";
+import { MapPin, Phone, Receipt } from "lucide-react";
 
 import { CoverageExplorer } from "@/components/sections/coverage-explorer";
+import { CopyField } from "@/components/ui/copy-field";
 
-import { offices, whatsappLink } from "@/lib/site";
+import { officeWhatsappLink, offices, paymentHolder, whatsappLink } from "@/lib/site";
 
 /**
  * Cobertura y oficinas.
@@ -35,40 +36,70 @@ export function Coverage() {
 
         <CoverageExplorer />
 
-        {/* Oficinas verificadas y puntos de soporte publicados por Killa. */}
+        {/* Oficinas verificadas: identidad, contacto y —abajo— cómo pagar por
+            transferencia. El alias es la cuenta de esa zona; el titular es único
+            para todas, por eso se aclara una sola vez debajo de la grilla. */}
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {offices.map((office, index) => (
-            <article
-              key={`${office.city}-${office.address}`}
-              className="card card-topline reveal p-6"
-              style={{ ["--reveal-delay" as string]: `${index * 80}ms` }}
-            >
-              <p className="font-mono text-[0.7rem] uppercase tracking-[0.16em] text-cyan">
-                {office.alias}
-              </p>
-              <h3 className="mt-2 font-display text-xl font-semibold tracking-tight text-fg">
-                {office.city}
-                <span className="ml-2 text-sm font-normal text-fg-faint">
-                  {office.province}
-                </span>
-              </h3>
-              <p className="mt-4 flex items-start gap-2.5 text-sm text-fg-muted">
-                <MapPin size={16} className="mt-0.5 shrink-0 text-fg-faint" aria-hidden />
-                {office.address}
-              </p>
-              {"phoneHref" in office ? (
-                <a
-                  href={office.phoneHref}
-                  className="mt-2.5 flex items-center gap-2.5 font-mono text-sm text-fg-muted transition-colors duration-300 hover:text-cyan"
-                >
-                  <Phone size={16} className="shrink-0 text-fg-faint" aria-hidden />
-                  {office.phone}
-                </a>
-              ) : <p className="mt-2.5 font-mono text-xs text-fg-faint">{office.phone}</p>}
-              <p className="mt-3 text-xs leading-relaxed text-fg-faint">{office.hours}</p>
-            </article>
-          ))}
+          {offices.map((office, index) => {
+            const phoneHref = "phoneHref" in office ? office.phoneHref : undefined;
+            return (
+              <article
+                key={`${office.city}-${office.address}`}
+                className="card card-topline reveal flex flex-col p-6"
+                style={{ ["--reveal-delay" as string]: `${index * 80}ms` }}
+              >
+                <h3 className="font-display text-xl font-semibold tracking-tight text-fg">
+                  {office.city}
+                  <span className="ml-2 text-sm font-normal text-fg-faint">
+                    {office.province}
+                  </span>
+                </h3>
+                <p className="mt-4 flex items-start gap-2.5 text-sm text-fg-muted">
+                  <MapPin size={16} className="mt-0.5 shrink-0 text-fg-faint" aria-hidden />
+                  {office.address}
+                </p>
+                {phoneHref ? (
+                  <a
+                    href={phoneHref}
+                    className="mt-2.5 flex items-center gap-2.5 font-mono text-sm text-fg-muted transition-colors duration-300 hover:text-cyan"
+                  >
+                    <Phone size={16} className="shrink-0 text-fg-faint" aria-hidden />
+                    {office.phone}
+                  </a>
+                ) : <p className="mt-2.5 font-mono text-xs text-fg-faint">{office.phone}</p>}
+                <p className="mt-3 text-xs leading-relaxed text-fg-faint">{office.hours}</p>
+
+                {/* Pago por transferencia de esta zona. */}
+                <div className="mt-auto border-t border-line pt-4">
+                  <p className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-fg-faint">
+                    Alias para pagos
+                  </p>
+                  <div className="mt-2">
+                    <CopyField value={office.alias} label={`alias ${office.alias}`} />
+                  </div>
+                  <a
+                    href={officeWhatsappLink(
+                      phoneHref,
+                      `Hola Killa (${office.city}), adjunto el comprobante de pago de mi servicio (alias ${office.alias}).`,
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-medium text-cyan transition-opacity hover:opacity-80"
+                  >
+                    <Receipt size={14} aria-hidden />
+                    Enviar comprobante
+                  </a>
+                </div>
+              </article>
+            );
+          })}
         </div>
+
+        <p className="reveal mt-4 text-xs text-fg-faint">
+          Todas las cuentas están a nombre de{" "}
+          <span className="text-fg-muted">{paymentHolder}</span>. Transferí al alias de tu
+          zona y enviá el comprobante por WhatsApp a esa oficina.
+        </p>
 
         <div className="reveal mt-8">
           <a

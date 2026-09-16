@@ -8,9 +8,8 @@ import {
   ShieldCheck,
   Tv,
 } from "lucide-react";
-import Image from "next/image";
-
 import { Logo } from "@/components/brand/logo";
+import { TvLogo } from "@/components/tv/tv-logo";
 
 const units = [
   {
@@ -27,9 +26,6 @@ const units = [
     ],
     href: "#hogar",
     cta: "Ver planes y soluciones",
-    logo: "/brand/killa-internet.png",
-    logoWidth: 2160,
-    logoHeight: 825,
   },
   {
     code: "02 / CONTENIDOS",
@@ -45,9 +41,6 @@ const units = [
     ],
     href: "/tv",
     cta: "Conocer Killa TV",
-    logo: "/brand/killa-tv-wordmark.png",
-    logoWidth: 1040,
-    logoHeight: 330,
   },
 ] as const;
 
@@ -103,13 +96,7 @@ export function Ecosystem() {
 
                 <div className="mt-8 flex h-20 items-center">
                   {warm ? (
-                    <Image
-                      src={unit.logo}
-                      alt={unit.name}
-                      width={unit.logoWidth}
-                      height={unit.logoHeight}
-                      className="h-auto max-h-20 w-[13rem] object-contain object-left tv-logo-image"
-                    />
+                    <TvLogo size="lg" />
                   ) : (
                     <Logo className="h-20 w-[14rem]" />
                   )}

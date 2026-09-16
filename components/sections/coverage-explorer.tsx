@@ -1,9 +1,10 @@
 "use client";
 
-import { FormEvent, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Headphones, MapPin, MessageCircle, Search } from "lucide-react";
 
 import { NetworkCorridor } from "@/components/visual/network-corridor";
+import { FOCUS_LOCALITY_EVENT } from "@/lib/localities";
 import {
   coverageLocalities,
   serviceZones,
@@ -53,6 +54,23 @@ export function CoverageExplorer() {
     setSuggestionsOpen(false);
     inputRef.current?.blur();
   }
+
+  // La sección de planes pide enfocar una localidad en el mapa (mismo id).
+  useEffect(() => {
+    function onFocusLocality(event: Event) {
+      const id = (event as CustomEvent<{ id?: string }>).detail?.id;
+      const locality = coverageLocalities.find((item) => item.id === id);
+      if (!locality) return;
+      setQuery(locality.name);
+      setSelected(locality);
+      setUnknownPlace("");
+      setActiveZone(locality.zoneId);
+      setSuggestionsOpen(false);
+      document.getElementById("cobertura")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    window.addEventListener(FOCUS_LOCALITY_EVENT, onFocusLocality);
+    return () => window.removeEventListener(FOCUS_LOCALITY_EVENT, onFocusLocality);
+  }, []);
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

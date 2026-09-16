@@ -13,7 +13,7 @@ export const site = {
   // y el dominio es killa.com.ar; en los docs internos figura KILLA en mayúscula.
   url: "https://killa.com.ar",
   tagline: "Brindamos acceso a Internet de forma eficiente y estable",
-  yearsInBusiness: 13,
+  yearsInBusiness: 18,
   email: "info@killa.com.ar",
   phoneDisplay: "3868 45-4000",
   phoneHref: "tel:+543868454000",
@@ -97,33 +97,12 @@ export const offices = [
 ] as const;
 
 /**
- * Zonas comerciales. El selector de zona existe por una razón de negocio, no
- * decorativa: Cafayate maneja tarifas distintas al resto del valle
- * (ver ../docs/00-CONTEXTO.md §1). Por eso el precio no se publica todavía y
- * la consulta sale a WhatsApp con la zona ya escrita.
+ * El selector de localidad de la sección de planes vive en `lib/localities.ts`,
+ * que une esta lista de oficinas con las localidades y corredores de
+ * `lib/network.ts`. Cafayate maneja tarifas distintas al resto del valle
+ * (ver ../docs/00-CONTEXTO.md §1); por eso el precio no se publica todavía y la
+ * consulta sale a WhatsApp con la localidad ya escrita.
  */
-export const zones = [
-  { id: "cafayate", label: "Cafayate" },
-  { id: "cachi", label: "Cachi" },
-  { id: "yuto", label: "Yuto" },
-  { id: "caimancito", label: "Caimancito" },
-  { id: "libertador", label: "Libertador Gral. San Martín" },
-  { id: "lapoma", label: "La Poma" },
-  { id: "payogasta", label: "Payogasta" },
-  { id: "seclantas", label: "Seclantás" },
-  { id: "molinos", label: "Molinos" },
-  { id: "angastaco", label: "Angastaco" },
-  { id: "sancarlos", label: "San Carlos" },
-  { id: "animana", label: "Animaná" },
-  { id: "tolombon", label: "Tolombón" },
-  { id: "colalao", label: "Colalao del Valle" },
-  { id: "quilmes", label: "Quilmes" },
-  { id: "fuerte-quemado", label: "Fuerte Quemado" },
-  { id: "santa-maria", label: "Santa María" },
-  { id: "san-jose", label: "San José" },
-] as const;
-
-export type ZoneId = (typeof zones)[number]["id"];
 
 export const homePlans = [
   {
@@ -182,38 +161,6 @@ export const businessServices = [
   },
 ] as const;
 
-/** Compromiso social — cifras declaradas por la empresa en killa.com.ar. */
-export const socialCommitment = [
-  {
-    value: "6",
-    label: "destacamentos policiales",
-    detail: "con internet sin cargo",
-    items: ["La Poma", "Payogasta", "Molinos", "Seclantás", "San Carlos", "Animaná"],
-  },
-  {
-    value: "3",
-    label: "escuelas",
-    detail: "conectadas sin cargo",
-    items: [
-      "Escuela Primaria La Cabaña (Dpto. San Carlos)",
-      "Escuela de Educación Técnica de Cachi",
-      "Escuela Primaria de Brealito",
-    ],
-  },
-  {
-    value: "2",
-    label: "iglesias",
-    detail: "y casas parroquiales conectadas sin cargo",
-    items: ["Molinos", "San Carlos"],
-  },
-  {
-    value: "250",
-    label: "familias",
-    detail: "con servicio subsidiado en Brealito y Luracatao",
-    items: ["En articulación con la Fundación Turismo Campesino"],
-  },
-] as const;
-
 export const navLinks = [
   { href: "#ecosistema", label: "Qué hacemos" },
   { href: "#hogar", label: "Internet en tu casa" },
@@ -226,4 +173,20 @@ export const navLinks = [
 /** Arma el link de WhatsApp con el mensaje ya escrito (plan + zona). */
 export function whatsappLink(message: string) {
   return `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(message)}`;
+}
+
+/** Titular de todas las cuentas de pago por transferencia (una por alias/zona). */
+export const paymentHolder = "KILLA COMUNICACIONES SRL";
+
+/**
+ * wa.me a partir del `tel:` de una oficina, para enviar el comprobante a esa
+ * oficina. Si la oficina no tiene número cargado (p. ej. Libertador), cae al
+ * WhatsApp general de Killa.
+ * TODO(cliente): confirmar que cada número de oficina atiende WhatsApp; varios
+ * podrían ser líneas fijas y tener un móvil distinto para mensajería.
+ */
+export function officeWhatsappLink(phoneHref: string | undefined, message: string) {
+  const digits = phoneHref?.replace(/\D/g, "");
+  const number = digits && digits.length >= 10 ? digits : site.whatsapp;
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }

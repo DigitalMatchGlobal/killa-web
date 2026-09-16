@@ -1,4 +1,8 @@
-import { ArrowRight, Newspaper, Plane, Trophy } from "lucide-react";
+import { ArrowRight, Newspaper, Plane, PlayCircle, Trophy } from "lucide-react";
+import Image from "next/image";
+
+/** Canal oficial de Killa TV en YouTube. */
+const YOUTUBE_CHANNEL = "https://www.youtube.com/@killatvok";
 
 /**
  * Banda de Killa TV.
@@ -73,16 +77,22 @@ export function KillaTV() {
             </a>
           </div>
 
-          {/* Marco de señal: un aparato encendido, no una captura de pantalla. */}
-          <div
-            className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-line lg:aspect-[5/4]"
-            aria-hidden
+          {/* Marco de señal: un aparato encendido con el logo oficial. Enlaza al
+              canal de YouTube. Cuando se conecte la YouTube Data API, este panel
+              muestra el vivo real en lugar del logo (ver docs). */}
+          <a
+            href={YOUTUBE_CHANNEL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative block aspect-[4/3] overflow-hidden rounded-2xl border border-line transition-colors duration-300 hover:border-sand/45 lg:aspect-[5/4]"
           >
+            {/* Pantalla siempre oscura (aunque el sitio esté en claro): el logo
+                del lockup es la variante negativa y necesita fondo oscuro. */}
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  "radial-gradient(80% 70% at 50% 40%, rgba(233,208,160,0.16), transparent 70%), linear-gradient(160deg, rgb(var(--surface)), rgb(var(--midnight)))",
+                  "radial-gradient(80% 70% at 50% 40%, rgba(233,208,160,0.16), transparent 70%), linear-gradient(160deg, rgb(13,26,48), rgb(4,10,22))",
               }}
             />
             {/* Líneas de barrido: la textura de una señal en el aire. */}
@@ -93,17 +103,26 @@ export function KillaTV() {
                   "repeating-linear-gradient(0deg, rgba(233,208,160,0.5) 0px, rgba(233,208,160,0.5) 1px, transparent 1px, transparent 5px)",
               }}
             />
-            <div className="absolute inset-0 grid place-items-center">
-              <div className="text-center">
-                <p className="font-mono text-[0.7rem] uppercase tracking-[0.3em] text-sand/80">
+            <div className="absolute inset-0 grid place-items-center p-8">
+              <div className="flex flex-col items-center text-center">
+                <p className="inline-flex items-center gap-2 font-mono text-[0.62rem] uppercase tracking-[0.28em] text-sand/80">
+                  <span className="size-1.5 rounded-full bg-sand shadow-[0_0_10px_rgba(233,208,160,0.8)]" aria-hidden />
                   En el aire
                 </p>
-                <p className="display mt-3 text-[clamp(2.5rem,9vw,4rem)] text-fg/90">
-                  killa<span className="text-sand">tv</span>
-                </p>
+                <Image
+                  src="/brand/killatv-lockup-dark.png"
+                  alt="Killa TV"
+                  width={1151}
+                  height={803}
+                  className="mt-5 h-auto w-36 sm:w-44"
+                />
+                <span className="mt-6 inline-flex items-center gap-2 rounded-full border border-sand/30 bg-sand/[0.08] px-4 py-2 text-sm text-white transition-colors duration-300 group-hover:border-sand/60">
+                  <PlayCircle size={16} className="text-sand" aria-hidden />
+                  Ver el canal en YouTube
+                </span>
               </div>
             </div>
-          </div>
+          </a>
         </div>
       </div>
     </section>
