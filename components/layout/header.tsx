@@ -68,27 +68,27 @@ export function Header() {
             : "-translate-y-full border-b border-transparent bg-transparent opacity-0",
         )}
       >
-        <div className="shell flex h-[72px] items-center justify-between gap-4">
+        <div className="shell flex h-[72px] items-center justify-between gap-5">
           <a href="#top" aria-label="Killa Internet — inicio" className={cn("site-header__brand shrink-0 transition-[transform,opacity] duration-500", scrolled || open ? "scale-100 opacity-100" : "scale-75 opacity-0")}>
             <Logo priority />
           </a>
 
-          <nav className="hidden items-center gap-1 lg:flex">
+          <nav className="hidden shrink-0 items-center gap-0.5 lg:flex">
             {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className="relative rounded-full px-3.5 py-2 text-sm text-fg-muted transition-colors duration-300 hover:text-fg"
+                className="relative whitespace-nowrap rounded-full px-3 py-2 text-sm text-fg-muted transition-colors duration-300 hover:text-fg"
               >
                 {link.label}
               </a>
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <a
               href={site.phoneHref}
-              className="hidden items-center gap-2 rounded-full border border-line px-4 py-2 font-mono text-xs text-fg-muted transition-colors duration-300 hover:border-cyan/60 hover:text-fg md:inline-flex"
+              className="hidden items-center gap-2 whitespace-nowrap rounded-full border border-line px-4 py-2 font-mono text-xs text-fg-muted transition-colors duration-300 hover:border-cyan/60 hover:text-fg md:inline-flex"
             >
               <Phone size={14} aria-hidden />
               {site.phoneDisplay}
