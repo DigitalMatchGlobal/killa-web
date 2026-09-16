@@ -72,10 +72,10 @@ export function HeroSignalKicker() {
           priority
         />
         <Image
-          src="/brand/killa-official.png"
+          src="/brand/killa-official-horizontal.png"
           alt=""
-          width={1600}
-          height={533}
+          width={2160}
+          height={896}
           className="hero-signal-kicker__logo hero-signal-kicker__logo--light hidden h-auto object-contain"
           priority
         />

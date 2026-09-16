@@ -24,10 +24,10 @@ export function Logo({ className, priority }: { className?: string; priority?: b
         className="brand-logo-dark absolute -inset-y-1 inset-x-0 h-[calc(100%+0.5rem)] w-full object-contain"
       />
       <Image
-        src="/brand/killa-official.png"
+        src="/brand/killa-official-horizontal.png"
         alt=""
-        width={1600}
-        height={533}
+        width={2160}
+        height={896}
         priority={priority}
         className="brand-logo-light absolute -inset-y-1 inset-x-0 hidden h-[calc(100%+0.5rem)] w-full object-contain"
       />
