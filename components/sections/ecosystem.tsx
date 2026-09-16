@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
+import { Logo } from "@/components/brand/logo";
+
 const units = [
   {
     code: "01 / CONECTIVIDAD",
@@ -100,13 +102,17 @@ export function Ecosystem() {
                 </div>
 
                 <div className="mt-8 flex h-20 items-center">
-                  <Image
-                    src={unit.logo}
-                    alt={unit.name}
-                    width={unit.logoWidth}
-                    height={unit.logoHeight}
-                    className={`h-auto max-h-20 object-contain object-left ${warm ? "w-[13rem] tv-logo-image" : "w-[14rem]"}`}
-                  />
+                  {warm ? (
+                    <Image
+                      src={unit.logo}
+                      alt={unit.name}
+                      width={unit.logoWidth}
+                      height={unit.logoHeight}
+                      className="h-auto max-h-20 w-[13rem] object-contain object-left tv-logo-image"
+                    />
+                  ) : (
+                    <Logo className="h-20 w-[14rem]" />
+                  )}
                 </div>
                 <p className="mt-4 max-w-md text-sm leading-relaxed text-fg-muted sm:text-base">
                   {unit.description}
