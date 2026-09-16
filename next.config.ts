@@ -19,7 +19,7 @@ const supabaseHost = (() => {
 const nextConfig: NextConfig = {
   // Permite probar el servidor de desarrollo desde el iPhone en la misma red.
   // Para mostrarle la propuesta al cliente usamos igualmente el build de producción.
-  allowedDevOrigins: ["192.168.1.187"],
+  allowedDevOrigins: ["192.168.1.187", "192.168.1.215", "localhost", "127.0.0.1"],
   experimental: {
     serverActions: {
       /**
