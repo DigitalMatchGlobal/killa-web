@@ -812,7 +812,6 @@ body {
 
   .coverage-zone-group[data-zone="ramal-norte"] { --zone-color: var(--cyan); }
   .coverage-zone-group[data-zone="valles-calchaquies"] { --zone-color: var(--sand); }
-  .coverage-zone-group[data-zone="corredor-sur"] { --zone-color: 73 214 174; }
 
   .network-link-base,
   .network-link-flow {
