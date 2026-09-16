@@ -88,6 +88,19 @@ export function findLocality(id: string) {
   return localityDetails.find((loc) => loc.id === id);
 }
 
+/** Busca una localidad por nombre exacto (o alias), para las pills del ramal. */
+export function findLocalityByName(name: string) {
+  const needle = normalizeText(name);
+  return localityDetails.find((loc) =>
+    [loc.name, ...loc.aliases].some((candidate) => normalizeText(candidate) === needle),
+  );
+}
+
+/** Ancla estable de la tarjeta de una oficina (para enlazar pill → card). */
+export function officeSlug(city: string) {
+  return `oficina-${normalizeText(city).replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`;
+}
+
 export function matchLocality(loc: LocalityDetail, query: string) {
   const needle = normalizeText(query);
   if (!needle) return true;

@@ -1,8 +1,9 @@
-import { MapPin, Phone, Receipt } from "lucide-react";
+import { ChevronDown, MapPin, Phone, Receipt } from "lucide-react";
 
 import { CoverageExplorer } from "@/components/sections/coverage-explorer";
 import { CopyField } from "@/components/ui/copy-field";
 
+import { officeSlug } from "@/lib/localities";
 import { officeWhatsappLink, offices, paymentHolder, whatsappLink } from "@/lib/site";
 
 /**
@@ -45,7 +46,8 @@ export function Coverage() {
             return (
               <article
                 key={`${office.city}-${office.address}`}
-                className="card card-topline reveal flex flex-col p-6"
+                id={officeSlug(office.city)}
+                className="office-card card card-topline reveal flex scroll-mt-24 flex-col p-6"
                 style={{ ["--reveal-delay" as string]: `${index * 80}ms` }}
               >
                 <h3 className="font-display text-xl font-semibold tracking-tight text-fg">
@@ -69,27 +71,34 @@ export function Coverage() {
                 ) : <p className="mt-2.5 font-mono text-xs text-fg-faint">{office.phone}</p>}
                 <p className="mt-3 text-xs leading-relaxed text-fg-faint">{office.hours}</p>
 
-                {/* Pago por transferencia de esta zona. */}
-                <div className="mt-auto border-t border-line pt-4">
-                  <p className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-fg-faint">
-                    Alias para pagos
-                  </p>
-                  <div className="mt-2">
-                    <CopyField value={office.alias} label={`alias ${office.alias}`} />
+                {/* Pago por transferencia: oculto por defecto, se abre por
+                    oficina para no recargar la tarjeta. */}
+                <details className="group mt-auto border-t border-line pt-4">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-xs font-medium text-fg-muted transition-colors hover:text-fg [&::-webkit-details-marker]:hidden">
+                    Datos para pagar por transferencia
+                    <ChevronDown size={16} className="shrink-0 text-fg-faint transition-transform duration-300 group-open:rotate-180" aria-hidden />
+                  </summary>
+                  <div className="mt-3">
+                    <p className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-fg-faint">
+                      Alias para pagos
+                    </p>
+                    <div className="mt-2">
+                      <CopyField value={office.alias} label={`alias ${office.alias}`} />
+                    </div>
+                    <a
+                      href={officeWhatsappLink(
+                        phoneHref,
+                        `Hola Killa (${office.city}), adjunto el comprobante de pago de mi servicio (alias ${office.alias}).`,
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-medium text-cyan transition-opacity hover:opacity-80"
+                    >
+                      <Receipt size={14} aria-hidden />
+                      Enviar comprobante
+                    </a>
                   </div>
-                  <a
-                    href={officeWhatsappLink(
-                      phoneHref,
-                      `Hola Killa (${office.city}), adjunto el comprobante de pago de mi servicio (alias ${office.alias}).`,
-                    )}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-medium text-cyan transition-opacity hover:opacity-80"
-                  >
-                    <Receipt size={14} aria-hidden />
-                    Enviar comprobante
-                  </a>
-                </div>
+                </details>
               </article>
             );
           })}

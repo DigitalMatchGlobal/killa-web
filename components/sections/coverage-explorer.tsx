@@ -1,10 +1,10 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Headphones, MapPin, MessageCircle, Search } from "lucide-react";
+import { ChevronDown, Headphones, MapPin, MessageCircle, Search } from "lucide-react";
 
 import { NetworkCorridor } from "@/components/visual/network-corridor";
-import { FOCUS_LOCALITY_EVENT } from "@/lib/localities";
+import { FOCUS_LOCALITY_EVENT, findLocalityByName, officeSlug } from "@/lib/localities";
 import {
   coverageLocalities,
   serviceZones,
@@ -31,7 +31,7 @@ function localityMatches(locality: CoverageLocality, query: string) {
 
 export function CoverageExplorer() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [activeZone, setActiveZone] = useState<ServiceZoneId>("valles-calchaquies");
+  const [activeZone, setActiveZone] = useState<ServiceZoneId | null>(null);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<CoverageLocality | null>(null);
   const [unknownPlace, setUnknownPlace] = useState("");
@@ -170,7 +170,7 @@ export function CoverageExplorer() {
       </div>
 
       <div className="card relative mt-3 h-[66svh] min-h-[460px] overflow-hidden sm:h-[72svh] lg:h-[76svh]">
-        <NetworkCorridor mode="full" activeZone={activeZone} focusNodeId={selected?.nodeId} className="absolute inset-0 h-full w-full" />
+        <NetworkCorridor mode="full" activeZone={activeZone ?? undefined} focusNodeId={selected?.nodeId} className="absolute inset-0 h-full w-full" />
         <p className="pointer-events-none absolute left-4 top-4 rounded-full border border-line bg-midnight/80 px-3 py-2 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-fg-faint backdrop-blur-sm sm:left-5 sm:top-5 sm:text-[0.65rem]">
           {selected ? `En foco · ${selected.name}` : "Zonas de servicio · seleccioná una"}
         </p>
@@ -179,42 +179,69 @@ export function CoverageExplorer() {
         </p>
       </div>
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-2" role="tablist" aria-label="Zonas de servicio de Killa">
+      {/* Acordeón por zona: colapsado ocupa poco; al abrir despliega sus
+          localidades (cada una enlaza a la oficina que la atiende). */}
+      <div className="mt-3 space-y-2">
         {serviceZones.map((zone, index) => {
-          const isSelected = zone.id === activeZone;
+          const isOpen = zone.id === activeZone;
           const style = zoneStyles[zone.accent];
           return (
-            <button
+            <div
               key={zone.id}
-              type="button"
-              role="tab"
-              aria-selected={isSelected}
-              aria-controls="detalle-zona"
-              onClick={() => { setActiveZone(zone.id); setSelected(null); }}
-              className={cn("flex min-h-[58px] items-center justify-between gap-4 rounded-xl border px-4 py-3 text-left transition-[background-color,border-color,transform] duration-300 active:scale-[0.98] sm:block sm:min-h-[72px]", isSelected ? style.selected : "border-line bg-surface/45 hover:border-line-strong")}
+              className={cn(
+                "card overflow-hidden transition-colors duration-300",
+                isOpen ? style.selected : "",
+              )}
             >
-              <span className="min-w-0">
-                <span className={cn("block font-mono text-[0.48rem] uppercase tracking-[0.08em] sm:text-[0.58rem]", isSelected ? style.kicker : "text-fg-faint")}>Zona {index + 1}</span>
-                <span className="mt-0.5 block font-display text-sm font-semibold leading-tight text-fg sm:mt-1">{zone.name}</span>
-              </span>
-              <span className={cn("size-2.5 shrink-0 rounded-full sm:hidden", isSelected ? style.dot : "bg-line-strong")} aria-hidden />
-            </button>
+              <button
+                type="button"
+                aria-expanded={isOpen}
+                onClick={() => {
+                  setActiveZone(isOpen ? null : zone.id);
+                  setSelected(null);
+                }}
+                className="flex w-full items-center justify-between gap-4 p-4 text-left sm:p-5"
+              >
+                <span className="min-w-0">
+                  <span className={cn("block font-mono text-[0.5rem] uppercase tracking-[0.1em] sm:text-[0.58rem]", isOpen ? style.kicker : "text-fg-faint")}>
+                    Zona {index + 1} · {zone.towns.length} localidades
+                  </span>
+                  <span className="mt-0.5 block font-display text-base font-semibold leading-tight text-fg">{zone.name}</span>
+                </span>
+                <span className="inline-flex shrink-0 items-center gap-2 text-xs font-medium text-fg-faint">
+                  <span className="hidden sm:inline">{isOpen ? "Ver menos" : "Ver localidades"}</span>
+                  <ChevronDown size={17} className={cn("transition-transform duration-300", isOpen && "rotate-180")} aria-hidden />
+                </span>
+              </button>
+
+              {isOpen && (
+                <div className="border-t border-line px-4 pb-5 pt-4 sm:px-5">
+                  <p className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
+                    {zone.province}
+                  </p>
+                  <p className="mt-3 text-xs text-fg-faint">Tocá una localidad para ver la oficina que la atiende.</p>
+                  <ul className="mt-2 flex flex-wrap gap-2">
+                    {zone.towns.map((town) => {
+                      const locality = findLocalityByName(town);
+                      const href = locality ? `#${officeSlug(locality.office.city)}` : undefined;
+                      return (
+                        <li key={town}>
+                          <a
+                            href={href}
+                            className="inline-flex items-center gap-2 rounded-full border border-line bg-fg/[0.03] px-3 py-2 text-xs text-fg-muted transition-colors duration-300 hover:border-cyan/50 hover:text-fg sm:text-sm"
+                          >
+                            <span className={cn("size-1.5 rounded-full", style.dot)} aria-hidden />
+                            {town}
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              )}
+            </div>
           );
         })}
-      </div>
-
-      <div id="detalle-zona" role="tabpanel" className="card mt-3 p-5 sm:p-6">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
-          <h3 className="font-display text-xl font-semibold tracking-tight text-fg">{active.name}</h3>
-          <p className="font-mono text-[0.62rem] uppercase tracking-[0.12em] text-fg-faint">{active.province} · {active.towns.length} localidades</p>
-        </div>
-        <ul className="mt-5 flex flex-wrap gap-2">
-          {active.towns.map((town) => (
-            <li key={town} className="inline-flex items-center gap-2 rounded-full border border-line bg-fg/[0.03] px-3 py-2 text-xs text-fg-muted sm:text-sm">
-              <span className={cn("size-1.5 rounded-full", activeStyle.dot)} aria-hidden />{town}
-            </li>
-          ))}
-        </ul>
       </div>
     </div>
   );

@@ -64,18 +64,18 @@ export function HeroSignalKicker() {
       <div className="hero-signal-kicker__meta" aria-hidden>
         <span className="node-dot" />
         <Image
-          src="/brand/killa-internet.png"
+          src="/brand/killa-internet-dark.png"
           alt=""
-          width={2160}
-          height={825}
+          width={2108}
+          height={820}
           className="hero-signal-kicker__logo hero-signal-kicker__logo--dark h-auto object-contain"
           priority
         />
         <Image
-          src="/brand/killa-official-horizontal.png"
+          src="/brand/killa-internet-light.png"
           alt=""
-          width={2160}
-          height={896}
+          width={2108}
+          height={820}
           className="hero-signal-kicker__logo hero-signal-kicker__logo--light hidden h-auto object-contain"
           priority
         />

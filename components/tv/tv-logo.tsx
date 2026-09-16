@@ -14,7 +14,9 @@ import { cn } from "@/lib/utils";
  */
 const SIZES = {
   md: { symbol: "size-9 sm:size-10", wordmark: "w-[7.6rem] sm:w-[8.6rem]" },
-  lg: { symbol: "size-12 sm:size-14", wordmark: "w-[8.5rem] sm:w-[10rem]" },
+  // Tamaño fijo (sin variantes sm:) para que en el ecosistema quede parejo con
+  // Killa Internet en móvil y escritorio por igual.
+  lg: { symbol: "size-12", wordmark: "w-[9rem]" },
 } as const;
 
 export function TvLogo({

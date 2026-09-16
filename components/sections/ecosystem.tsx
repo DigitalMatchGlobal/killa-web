@@ -98,7 +98,7 @@ export function Ecosystem() {
                   {warm ? (
                     <TvLogo size="lg" />
                   ) : (
-                    <Logo className="h-20 w-[14rem]" />
+                    <Logo size="lg" />
                   )}
                 </div>
                 <p className="mt-4 max-w-md text-sm leading-relaxed text-fg-muted sm:text-base">

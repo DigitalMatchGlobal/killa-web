@@ -226,6 +226,10 @@ export function NetworkCorridor({
         {regionalNodes.map((node, index) => {
           const important = node.kind === "office" || node.kind === "hub";
           const selected = focusNodeId === node.id;
+          // Con una localidad en foco mostramos solo su etiqueta (spotlight): en
+          // los racimos densos (Cachi/Seclantás/Brealito/Luracatao) las etiquetas
+          // se pisaban entre sí. Sin foco, se ven las de oficinas y hubs.
+          const showLabel = focusNodeId ? selected : important;
           const label = labelPositions[node.id] ?? { dx: 12, dy: -8 };
           const signalIndex = signalOrder.get(node.id);
           return (
@@ -261,7 +265,7 @@ export function NetworkCorridor({
                 r={important ? 5.5 : 3}
                 className="map-node-core"
               />
-              {(important || selected) && label && (
+              {showLabel && (
                 <text
                   x={node.x + label.dx}
                   y={node.y + label.dy}
