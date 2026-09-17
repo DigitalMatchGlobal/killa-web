@@ -10,6 +10,7 @@ import { Hero } from "@/components/sections/hero";
 import { KillaTV } from "@/components/sections/killa-tv";
 import { Marquee } from "@/components/sections/marquee";
 import { Plans } from "@/components/sections/plans";
+import { SmoothScroll } from "@/components/layout/smooth-scroll";
 import { RevealOnScroll } from "@/components/visual/reveal-on-scroll";
 import { ViewportHeightSync } from "@/components/visual/viewport-height-sync";
 
@@ -18,6 +19,7 @@ export default function Home() {
     <>
       <RevealOnScroll />
       <ViewportHeightSync />
+      <SmoothScroll />
       <Header />
       <main>
         <Hero />

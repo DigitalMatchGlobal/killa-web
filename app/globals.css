@@ -185,7 +185,7 @@ body {
 
 /* Al llegar desde una pill de localidad, la tarjeta de oficina se resalta un
  * instante para que se vea a cuál te llevó. */
-.office-card:target {
+.office-card.is-flash {
   border-color: rgb(var(--cyan) / 0.6);
   box-shadow: 0 0 0 1px rgb(var(--cyan) / 0.5), 0 18px 48px -30px rgb(var(--cyan) / 0.7);
   animation: office-card-flash 1.6s ease-out;
@@ -195,7 +195,7 @@ body {
   100% { background-color: transparent; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .office-card:target { animation: none; }
+  .office-card.is-flash { animation: none; }
 }
 
 .hero-frame {
