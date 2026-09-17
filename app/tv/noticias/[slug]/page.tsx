@@ -36,7 +36,7 @@ export async function generateMetadata({
   const canonical = `/tv/noticias/${article.slug}`;
   const images = article.featuredImageUrl
     ? [{ url: article.featuredImageUrl, alt: article.imageAlt }]
-    : [{ url: "/og-tv.png", alt: "Killa TV" }];
+    : [{ url: "/og-tv.png?v=20260917", alt: "Killa TV — El Canal Oficial del Valle Calchaquí" }];
 
   return {
     title: article.title,

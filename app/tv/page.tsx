@@ -27,10 +27,10 @@ export const metadata: Metadata = {
       "Noticias, deporte y turismo del Valle Calchaquí y todo el NOA.",
     images: [
       {
-        url: "/og-tv.png",
-        width: 1536,
-        height: 1024,
-        alt: "Killa TV — La señal del norte",
+        url: "/og-tv.png?v=20260917",
+        width: 1200,
+        height: 630,
+        alt: "Killa TV — El Canal Oficial del Valle Calchaquí",
       },
     ],
   },
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     title: "Killa TV – El Canal Oficial del Valle Calchaquí",
     description:
       "Noticias, deporte y turismo del Valle Calchaquí y todo el NOA.",
-    images: ["/og-tv.png"],
+    images: ["/og-tv.png?v=20260917"],
   },
 };
 

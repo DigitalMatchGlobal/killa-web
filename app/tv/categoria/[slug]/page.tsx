@@ -107,7 +107,7 @@ export async function generateMetadata({
       url: `/tv/categoria/${category.slug}`,
       title: `${category.name} · Killa TV`,
       description: `Noticias de ${category.name} en Killa TV.`,
-      images: [{ url: "/og-tv.png", alt: "Killa TV" }],
+      images: [{ url: "/og-tv.png?v=20260917", alt: "Killa TV — El Canal Oficial del Valle Calchaquí" }],
     },
   };
 }
