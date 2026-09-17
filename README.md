@@ -1,9 +1,9 @@
 # killa-web · Landing institucional + Killa TV
 
-**Estado:** landing en primera iteración de diseño, lista para mostrar; **backend
-editorial de Killa TV implementado y verificado en local**. Nada aprobado, nada
-publicado, ningún proyecto Supabase real creado todavía.
-**Última actualización:** 2026-09-04
+**Estado:** sitio institucional y portal editorial Killa TV **publicados en
+Vercel**. El portal usa el proyecto Supabase real y el panel editorial exige
+sesión. La rama `main` está sincronizada con el remoto.
+**Última actualización:** 2026-09-17
 
 Es la primera etapa del proyecto P3 del programa (web institucional + Killa TV).
 El resto del relevamiento vive en [`../docs/`](../docs/); la oferta comercial que
@@ -28,8 +28,6 @@ relevamiento; **nada está inventado**.
 
 **No es** todavía:
 
-- el portal de noticias de Killa TV con carga propia (portada, nota, editores) —
-  es lo que está presupuestado en el doc 08 y se construye sobre esta misma base;
 - el área de clientes ni nada que toque Mikrowisp;
 - un sitio con precios publicados (ver §3).
 
@@ -144,7 +142,7 @@ Todo vive en [`app/globals.css`](app/globals.css).
 
 ---
 
-## 5. Pendientes antes de publicar
+## 5. Pendientes operativos
 
 Marcados con `TODO(cliente)` en el código.
 
@@ -153,11 +151,13 @@ Marcados con `TODO(cliente)` en el código.
 | 1 | **Confirmar el WhatsApp.** Hoy los ~10 CTA apuntan al teléfono general (`+54 9 3868 45-4000`). Si hay otra línea — o cuando Matchbot tome la atención — se cambia en un solo lugar. | [`lib/site.ts`](lib/site.ts) |
 | 2 | **Logotipo vectorial.** Hoy es un PNG bajado del sitio actual. Pedir el SVG o el AI. | [`public/brand/`](public/brand/) |
 | 3 | **Grafía oficial.** El logo usa `killa` en minúscula, el dominio es killa.com.ar y los docs internos escriben KILLA. Cerrarlo antes de producir nada más. | — |
-| 4 | **Lista definitiva de localidades.** Las 18 del mapa salen del material institucional compartido por Killa en redes. Hay que confirmarlas una por una antes de publicar. | [`lib/network.ts`](lib/network.ts) |
+| 4 | **Trazado y localidades.** El mapa ya reúne los dos ramales acordados —Ramal Norte y Valles Calchaquíes, de La Poma a San José—. Ante una nueva localidad, se modifica la fuente única. | [`lib/network.ts`](lib/network.ts) |
 | 5 | **Fotos reales del valle y del equipo técnico.** Es lo único que le falta a la página para dejar de ser sólo gráfica. | — |
-| 6 | ~~Novedades / Killa TV con carga propia.~~ **Hecho**: el backend editorial está implementado. Falta crear el proyecto Supabase real y las cuentas del equipo de prensa. | [`docs/BACKEND-ETAPA-1.md`](docs/BACKEND-ETAPA-1.md) |
+| 6 | **Operación editorial.** El portal, las categorías y el panel ya están en producción. Queda administrar altas/bajas del equipo y cargar contenido periodístico real. | [`docs/BACKEND-ETAPA-1.md`](docs/BACKEND-ETAPA-1.md) |
+| 7 | **Dominio final y SEO.** Hoy el canonical público apunta a `killa-web-two.vercel.app`. Al conectar el dominio definitivo, cargar `NEXT_PUBLIC_SITE_URL` con ese dominio para unificar canonical y Open Graph. | [`lib/public-url.ts`](lib/public-url.ts) |
 
-Nada de esto bloquea mostrar la iteración: son datos, no desarrollo.
+Nada de esto bloquea el sitio ya publicado: son decisiones operativas o de
+contenido, no desarrollo pendiente.
 
 ---
 
@@ -178,7 +178,9 @@ La home institucional sigue siendo estática. Lo que usa base es Killa TV.
 
 ## 7. Killa TV: portal editorial (Etapa 1)
 
-El portal de noticias y su panel privado están implementados sobre Supabase.
+El portal de noticias y su panel privado están implementados sobre Supabase y
+publicados en Vercel. Al 2026-09-17 se verificaron `/` y `/tv` con **200**, y
+`/tv/panel` sin sesión redirige al login editorial.
 
 | Ruta | Qué es |
 |---|---|

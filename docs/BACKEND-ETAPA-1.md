@@ -1,9 +1,11 @@
 # Backend editorial de Killa TV — Etapa 1
 
-**Fecha:** 2026-09-04 · **Rama:** `feat/backend-editorial-etapa1` ·
-**Estado:** implementado, verificado en local y **aplicado al proyecto real**
-(`ztuhmauobojsiwgxrhqa`, us-east-2, Postgres 17.6) el 2026-09-04. La app ya lee
-de ese proyecto. Falta crear las cuentas del equipo de prensa y desplegar.
+**Fecha:** 2026-09-17 · **Rama:** `main` ·
+**Estado:** implementado, aplicado al proyecto Supabase real
+(`ztuhmauobojsiwgxrhqa`, us-east-2, Postgres 17.6) y **desplegado en Vercel**.
+La app pública y el panel editorial ya leen de ese proyecto; la cuenta
+administrativa inicial fue creada. El foco pendiente es operativo, no de
+infraestructura base.
 
 Informe de qué se hizo, qué se decidió y por qué, y qué queda pendiente.
 El detalle de configuración vive en [`../supabase/README.md`](../supabase/README.md).
@@ -148,11 +150,11 @@ por un test.
 
 | Comando | Qué prueba | Resultado |
 |---|---|---|
-| `npm run test` | Reglas puras: ranking de portada, saneamiento, validación de publicación, firma de imagen, mapeo del contrato | **25 ✅** |
-| `npm run test:rules` | RLS, privilegios de tabla, rol admin y reglas de la base contra un Postgres real | **37 ✅** |
-| `npm run test:e2e` | Los criterios de aceptación por HTTP, con el sitio levantado | **21 ✅** |
-| `npm run build` | Compila y prerenderiza las tres notas desde la base | ✅ |
-| `npm run lint` | Sin errores nuevos (queda 1 warning preexistente en `coverage-explorer.tsx`) | ✅ |
+| `npm run test` | Reglas puras: ranking de portada, saneamiento, validación de publicación, firma de imagen y mapeo del contrato | **38 ✅** (2026-09-17) |
+| `npm run test:rules` | RLS, privilegios de tabla, rol admin y reglas de la base contra un Postgres real | Requiere stack Supabase local; correr antes de cambios de esquema |
+| `npm run test:e2e` | Los criterios de aceptación por HTTP, con el sitio levantado | Requiere stack Supabase local; correr antes de cambios editoriales |
+| Deploy de Vercel | Compila y prerenderiza el sitio publicado | `/` y `/tv` **200**; login editorial **200** (2026-09-17) |
+| `npm run lint` | Sin errores de lint | ✅ (2026-09-17) |
 
 Los dos últimos suites **abortan si la URL de Supabase no es local**: crean
 usuarios y escriben notas.
@@ -184,12 +186,13 @@ usuarios y escriben notas.
 
 ## 5. Pendientes
 
-**Hecho entre el 2026-09-04 y el 2026-09-05 sobre el proyecto real:**
+**Hecho sobre el proyecto real y en el despliegue actual:**
 
-- Las primeras 6 migraciones aplicadas y registradas en
-  `supabase_migrations.schema_migrations`. Se aplicaron por **Management API**
-  con el PAT, porque la contraseña de la base no estaba disponible; el proyecto
-  estaba completamente vacío (0 tablas, 0 buckets, 0 usuarios) antes de tocarlo.
+- El proyecto se inicializó vacío y las migraciones editoriales, de seguridad,
+  destacada única y firma pública quedaron registradas. El repositorio además
+  incluye la migración de secciones editoriales (`20260915120000`); comparar
+  `supabase migration list` con producción antes de cualquier próximo cambio de
+  esquema.
 - Registro público cerrado y mínimo de contraseña alineado en 8.
 - La destacada manual está aplicada y el bucket limita imágenes a 3 MB.
 - `.env.local` apunta al stack local a propósito. Las credenciales de
@@ -201,28 +204,26 @@ usuarios y escriben notas.
   desde la nube; `/tv`, la nota, la sección y el 404 de sección inexistente
   responden bien, y `/tv/panel` sin sesión redirige al login.
 
-**Falta para poner el sitio en producción:**
+**Pendientes reales después del despliegue:**
 
-1. **Aplicar `20260905130000`** antes de desplegar el frontend actualizado:
-   cierra la carrera concurrente de la destacada y retira dos índices obsoletos.
-2. **Crear las cuentas del equipo de prensa** (Authentication → Add user, con
-   "Auto Confirm User") y decidir quién es `admin`:
-   `update public.profiles set role = 'admin' where id = '<uuid>';`
-   No lo hice: son datos de personas reales y no me los pasaste.
-3. **Cargar las dos variables en Vercel** (`NEXT_PUBLIC_SUPABASE_URL` y
-   `NEXT_PUBLIC_SUPABASE_ANON_KEY`) y desplegar. Sin autorización explícita no
-   toqué Vercel ni pushee la rama.
-4. ⚠️ **Confirmar el plan de la organización** `swwsxexyzvbnzoqwzjgd`. El PAT no
+1. **Administrar el equipo de prensa.** La primera cuenta admin ya existe. Para
+   nuevas cuentas: Authentication → Add user → “Auto Confirm User”. El trigger
+   crea el perfil como `editor`; sólo los responsables definidos pueden
+   promoverse explícitamente a `admin`.
+2. **Configurar el dominio final.** El deploy actual funciona en Vercel, pero
+   el canonical y `og:url` aún apuntan a `killa-web-two.vercel.app`. Al conectar
+   el dominio de Killa, cargar también `NEXT_PUBLIC_SITE_URL` en Production.
+3. ⚠️ **Confirmar el plan de la organización** `swwsxexyzvbnzoqwzjgd`. El PAT no
    tiene alcance para leerlo (`Forbidden`). La política de la casa
    (`../../INFRAESTRUCTURA-DMG.md`) es un solo Supabase Pro compartido; si esta
    cuenta dedicada de DigitalMatch quedó en plan free, el proyecto no hereda
    backups ni límites del Pro — y eso es lo que sostiene la mensualidad del
    doc 08.
-5. ⚠️ **El PAT circuló por chat.** Conviene revocarlo en
+4. ⚠️ **Revocar o confirmar revocado el PAT de setup** que circuló por chat en
    <https://supabase.com/dashboard/account/tokens> cuando termine el setup: da
    acceso completo a la cuenta por API.
-6. **Contenido real**: las tres notas migradas son material institucional de
-   demostración.
+5. **Contenido real**: la operación editorial tiene que reemplazar o ampliar
+   gradualmente el material de demostración con notas periodísticas reales.
 
 Además, quedan afuera a propósito y conviene tenerlos anotados:
 
@@ -257,6 +258,8 @@ supabase/migrations/20260904150000_etapa1_privilegios_minimos.sql
 supabase/migrations/20260904160000_etapa1_rol_admin_explicito.sql
 supabase/migrations/20260905120000_etapa1_destacada_manual_e_imagenes.sql
 supabase/migrations/20260905130000_etapa1_destacada_unica.sql
+supabase/migrations/20260906120000_etapa1_firma_editorial.sql
+supabase/migrations/20260915120000_etapa1_secciones_editoriales.sql
 
 lib/supabase/env.ts                     lib/editorial/types.ts
 lib/supabase/server.ts                  lib/editorial/queries.ts
