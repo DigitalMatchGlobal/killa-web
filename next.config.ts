@@ -42,6 +42,23 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "4mb",
     },
   },
+  /**
+   * URLs del WordPress anterior (relevadas de su sitemap el 2026-10-07).
+   * Se redirigen en 301 para no perder los links que ya circulan por Google y
+   * WhatsApp. Las páginas institucionales caen en su sección de la landing; las
+   * novedades y las notas viejas, en el portal Killa TV.
+   */
+  async redirects() {
+    return [
+      { source: "/internet-en-tu-casa", destination: "/#hogar", permanent: true },
+      { source: "/servicios-empresariales", destination: "/#empresas", permanent: true },
+      { source: "/quienes-somos", destination: "/#empresa", permanent: true },
+      { source: "/ampliamos-nuestra-zona-de-cobertura", destination: "/#cobertura", permanent: true },
+      { source: "/novedades", destination: "/tv", permanent: true },
+      { source: "/renovamos-nuestro-hardware", destination: "/tv", permanent: true },
+      { source: "/category/:path*", destination: "/tv", permanent: true },
+    ];
+  },
   images: {
     remotePatterns: supabaseHost
       ? [
