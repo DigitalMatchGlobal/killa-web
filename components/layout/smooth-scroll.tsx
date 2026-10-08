@@ -25,8 +25,11 @@ function scrollToId(id: string) {
   } else {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
-  // URL limpia, sin hash.
-  window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  // URL limpia, sin hash ni el parámetro `seccion` de los redirects viejos.
+  const params = new URLSearchParams(window.location.search);
+  params.delete("seccion");
+  const query = params.toString();
+  window.history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : ""));
   if (el?.classList.contains("office-card")) {
     el.classList.remove("is-flash");
     void el.offsetWidth; // reinicia la animación
@@ -52,10 +55,14 @@ export function SmoothScroll() {
 
     document.addEventListener("click", onClick);
 
-    // Si se entra con un hash heredado (link viejo), reposicionamos y limpiamos.
-    if (window.location.hash.length > 1) {
-      const id = window.location.hash.slice(1);
-      window.requestAnimationFrame(() => scrollToId(id));
+    // Si se entra con un hash heredado o con `?seccion=` (redirects del WordPress
+    // anterior), reposicionamos y limpiamos la URL.
+    const entrada =
+      window.location.hash.length > 1
+        ? window.location.hash.slice(1)
+        : new URLSearchParams(window.location.search).get("seccion");
+    if (entrada) {
+      window.requestAnimationFrame(() => scrollToId(entrada));
     }
 
     return () => document.removeEventListener("click", onClick);
