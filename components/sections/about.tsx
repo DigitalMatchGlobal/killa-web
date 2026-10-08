@@ -67,7 +67,7 @@ export function About() {
             Empezamos como prestadora de televisión por cable y nunca nos fuimos del
             rubro. Esa permanencia ininterrumpida nos dejó lo que hoy es nuestro mayor
             capital: un equipo de personas con oficio en comunicaciones, que conoce
-            cada cerro por donde pasa un enlace.
+            cada familia, emprendimiento y pyme donde prestamos servicio.
           </p>
           <p className="mt-4 text-fg-muted">
             No es una promesa de folleto: es presencia real en el territorio, sostenida
