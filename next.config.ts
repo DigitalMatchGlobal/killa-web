@@ -50,10 +50,10 @@ const nextConfig: NextConfig = {
    */
   async redirects() {
     return [
-      { source: "/internet-en-tu-casa", destination: "/#hogar", permanent: true },
-      { source: "/servicios-empresariales", destination: "/#empresas", permanent: true },
-      { source: "/quienes-somos", destination: "/#empresa", permanent: true },
-      { source: "/ampliamos-nuestra-zona-de-cobertura", destination: "/#cobertura", permanent: true },
+      { source: "/internet-en-tu-casa", destination: "/?seccion=hogar", permanent: true },
+      { source: "/servicios-empresariales", destination: "/?seccion=empresas", permanent: true },
+      { source: "/quienes-somos", destination: "/?seccion=empresa", permanent: true },
+      { source: "/ampliamos-nuestra-zona-de-cobertura", destination: "/?seccion=cobertura", permanent: true },
       { source: "/novedades", destination: "/tv", permanent: true },
       { source: "/renovamos-nuestro-hardware", destination: "/tv", permanent: true },
       { source: "/category/:path*", destination: "/tv", permanent: true },
