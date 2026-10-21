@@ -27,10 +27,10 @@ export const offices = [
     city: "Cafayate",
     province: "Salta",
     alias: "KILLA.CAFAYATE",
-    address: "Rivadavia 237",
+    address: "Rivadavia 327",
     phone: "3868 45-4000",
     phoneHref: "tel:+543868454000",
-    hours: "Lun–Vie 8:30–12:30 y 16–20 · Sáb 8:30–12:30",
+    hours: "Lun–Vie 8:30–12:30 y 17–21 · Sáb 8:30–12:30",
   },
   {
     city: "San Carlos",
