@@ -34,8 +34,11 @@ export async function generateMetadata({
   if (!article) return {};
 
   const canonical = `/tv/noticias/${article.slug}`;
+  // La foto pasa por /og, que la achica a un peso que WhatsApp acepta (ver la
+  // ruta). `v` cambia al editar la nota, así el CDN no sirve una versión vieja.
+  const version = Date.parse(article.updatedAt) || 0;
   const images = article.featuredImageUrl
-    ? [{ url: article.featuredImageUrl, alt: article.imageAlt }]
+    ? [{ url: `${canonical}/og?v=${version}`, alt: article.imageAlt }]
     : [{ url: "/og-tv.png?v=20260917", alt: "Killa TV — El Canal Oficial del Valle Calchaquí" }];
 
   return {
