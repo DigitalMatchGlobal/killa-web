@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 import { LOGIN_PATH, PANEL_PATH, getCurrentProfile, requireEditorialStaff } from "./auth";
+import { optimizeFeaturedImage } from "./image";
 import { getPanelArticleById } from "./panel";
 import {
   IMAGE_EXTENSIONS,
@@ -349,11 +350,21 @@ export async function uploadFeaturedImageAction(
 
   const now = new Date();
   const folder = `${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
-  const path = `${folder}/${crypto.randomUUID()}.${IMAGE_EXTENSIONS[sniffed]}`;
+  // Se guarda una versión liviana (ver `optimizeFeaturedImage`); si no se pudo
+  // optimizar, se sube el original.
+  const optimized = await optimizeFeaturedImage(buffer, sniffed);
+  const body = optimized?.bytes ?? buffer;
+  const contentType = optimized?.mime ?? sniffed;
+  const extension = optimized?.extension ?? IMAGE_EXTENSIONS[sniffed];
+  const path = `${folder}/${crypto.randomUUID()}.${extension}`;
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, {
-    contentType: sniffed,
+  const { error } = await supabase.storage.from(BUCKET).upload(path, body, {
+    contentType,
+    // El nombre lleva un uuid y nunca se sobreescribe (upsert: false): el
+    // contenido de una URL no cambia, así que puede cachearse un año. Con el
+    // valor por defecto (1 h) cada navegador y cada CDN volvía a pedirla.
+    cacheControl: "31536000",
     upsert: false,
   });
 
