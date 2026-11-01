@@ -19,9 +19,17 @@ import { getArticleBySlug, getCategories, getLatestArticles, getPublishedSlugs }
  */
 export const revalidate = 300;
 
+/**
+ * Sólo las más recientes se generan al desplegar (`getPublishedSlugs` viene de
+ * la más nueva a la más vieja). Con cientos de notas, generarlas todas haría
+ * lento cada deploy; el resto se genera la primera vez que alguien la pide y
+ * después se sirve desde caché igual que las demás.
+ */
+const PRERENDERED_ARTICLES = 50;
+
 export async function generateStaticParams() {
   const slugs = await getPublishedSlugs();
-  return slugs.map((slug) => ({ slug }));
+  return slugs.slice(0, PRERENDERED_ARTICLES).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({

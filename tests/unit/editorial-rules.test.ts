@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { compareEditorialRank, pickFeatured, pickLatest } from "@/lib/editorial/ranking";
+import { compareEditorialRank, hasStalePriority, pickFeatured, priorityGroupOf, pickLatest } from "@/lib/editorial/ranking";
 import { sanitizeBody, sanitizeSingleLine, toParagraphs } from "@/lib/editorial/sanitize";
 import {
   articleDraftSchema,
@@ -37,7 +37,7 @@ function article(overrides: Partial<Article> & { id: string }): Article {
     featuredImageUrl: "",
     imageAlt: "",
     status: overrides.status ?? "published",
-    priority: overrides.priority ?? 1,
+    priority: overrides.priority ?? 3,
     isFeatured: overrides.isFeatured ?? false,
     byline: overrides.byline ?? null,
     publishedAt: overrides.publishedAt ?? "2026-08-30T12:00:00Z",
@@ -135,6 +135,69 @@ describe("últimas publicaciones", () => {
     ];
 
     expect(pickLatest(all, { limit: 2 }).map((item) => item.id)).toEqual(["1", "2"]);
+  });
+});
+
+describe("prioridad editorial en listados", () => {
+  it("ordena por prioridad y, a igual prioridad, por fecha", () => {
+    const all = [
+      article({ id: "normal-nueva", priority: 3, publishedAt: "2026-09-03T10:00:00Z" }),
+      article({ id: "alta-vieja", priority: 5, publishedAt: "2026-08-01T10:00:00Z" }),
+      article({ id: "baja-nueva", priority: 1, publishedAt: "2026-09-05T10:00:00Z" }),
+      article({ id: "normal-vieja", priority: 3, publishedAt: "2026-09-01T10:00:00Z" }),
+    ];
+
+    expect(pickLatest(all).map((item) => item.id)).toEqual([
+      "alta-vieja",
+      "normal-nueva",
+      "normal-vieja",
+      "baja-nueva",
+    ]);
+  });
+
+  it("la destacada sigue fuera del listado y la prioridad no decide la tapa", () => {
+    const all = [
+      article({ id: "alta", priority: 5, publishedAt: "2026-08-01T10:00:00Z" }),
+      article({ id: "reciente", priority: 1, publishedAt: "2026-09-01T10:00:00Z" }),
+    ];
+
+    // Sin destacada manual, la tapa es la más reciente aunque tenga prioridad baja.
+    const featured = pickFeatured(all);
+    expect(featured?.id).toBe("reciente");
+    expect(pickLatest(all, { excludeId: featured?.id }).map((item) => item.id)).toEqual(["alta"]);
+  });
+
+  it("una destacada con prioridad baja igual es la tapa", () => {
+    const all = [
+      article({ id: "alta", priority: 5 }),
+      article({ id: "elegida", priority: 1, isFeatured: true, publishedAt: "2026-07-01T10:00:00Z" }),
+    ];
+
+    expect(pickFeatured(all)?.id).toBe("elegida");
+  });
+
+  it("avisa de una prioridad alta vieja, y de ninguna otra", () => {
+    const now = Date.parse("2026-11-20T12:00:00Z");
+    const alta = { status: "published" as const, priority: 5 as const };
+
+    expect(hasStalePriority({ ...alta, publishedAt: "2026-11-01T10:00:00Z" }, now)).toBe(true);
+    expect(hasStalePriority({ ...alta, publishedAt: "2026-11-18T10:00:00Z" }, now)).toBe(false);
+    expect(hasStalePriority({ status: "published", priority: 3, publishedAt: "2026-10-01T10:00:00Z" }, now)).toBe(false);
+    expect(hasStalePriority({ status: "archived", priority: 5, publishedAt: "2026-10-01T10:00:00Z" }, now)).toBe(false);
+  });
+
+  it("agrupa para el panel: tapa, alta, normal y baja", () => {
+    expect(priorityGroupOf({ isFeatured: true, priority: 1 }).key).toBe("tapa");
+    expect(priorityGroupOf({ isFeatured: false, priority: 5 }).key).toBe("alta");
+    expect(priorityGroupOf({ isFeatured: false, priority: 4 }).key).toBe("alta");
+    expect(priorityGroupOf({ isFeatured: false, priority: 3 }).key).toBe("normal");
+    expect(priorityGroupOf({ isFeatured: false, priority: 2 }).key).toBe("baja");
+  });
+
+  it("el desempate por id mantiene el orden estable", () => {
+    const a = article({ id: "aaa", priority: 4 });
+    const b = article({ id: "bbb", priority: 4 });
+    expect(compareEditorialRank(a, b)).toBeLessThan(0);
   });
 });
 

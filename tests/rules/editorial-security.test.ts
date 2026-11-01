@@ -361,8 +361,8 @@ describe("criterio 3: el editor recorre el ciclo completo", () => {
   });
 });
 
-describe("criterios 5 y 6: portada y orden cronológico, resueltos en SQL", () => {
-  it("la destacada es manual y las últimas siguen orden cronológico", async () => {
+describe("criterios 5 y 6: portada manual y listados por prioridad, resueltos en SQL", () => {
+  it("la destacada es manual y los listados ordenan por prioridad y luego fecha", async () => {
     // Escenario aislado: se archiva todo lo demás para que la selección sea
     // observable sin depender del seed.
     const { data: preexisting } = await service
@@ -414,12 +414,15 @@ describe("criterios 5 y 6: portada y orden cronológico, resueltos en SQL", () =
       .select("id")
       .eq("status", "published")
       .neq("id", elegida.id)
-      .order("published_at", { ascending: false });
+      .order("priority", { ascending: false })
+      .order("published_at", { ascending: false })
+      .order("id", { ascending: true });
 
+    // La prioridad 5 va primero aunque sea más vieja; a igual prioridad, la más reciente.
     expect(latest.data?.map((row) => row.id)).toEqual([
+      importante.id,
       reciente.id,
       vieja.id,
-      importante.id,
     ]);
 
     // Devolver el escenario a como estaba.
