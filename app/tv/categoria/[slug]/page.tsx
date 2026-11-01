@@ -134,6 +134,9 @@ export default async function CategoryPage({
     subsection: activeSubsection,
   });
 
+  // Una página fuera de rango no es "sección vacía": no existe.
+  if (result.page > 1 && result.items.length === 0) notFound();
+
   return (
     <div className="min-h-screen bg-midnight text-fg">
       <TvPublicHeader categories={categories} activeCategory={category.slug} />

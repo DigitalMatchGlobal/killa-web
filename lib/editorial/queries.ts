@@ -65,6 +65,13 @@ function warnFallback(operation: string) {
   );
 }
 
+/**
+ * PostgREST responde 416 (PGRST103) cuando la página pedida empieza después del
+ * último registro, por ejemplo `?pagina=99`. No es una falla del servidor: es
+ * una página que no existe, así que se devuelve vacía y la ruta decide el 404.
+ */
+const RANGE_NOT_SATISFIABLE = "PGRST103";
+
 function rangeFor(page: number, pageSize: number) {
   const safePage = Number.isFinite(page) && page > 0 ? Math.trunc(page) : 1;
   const safeSize =
@@ -112,7 +119,8 @@ export async function getFeaturedArticle(): Promise<Article | null> {
 }
 
 /**
- * "Últimas publicaciones": `published_at` descendente, excluyendo la principal.
+ * "Más noticias": prioridad editorial descendente y, a igual prioridad,
+ * `published_at` descendente, excluyendo la principal.
  *
  * `excludeId` lo pasa la página con el id que devolvió `getFeaturedArticle()`.
  * No se recalcula el destacado acá: una sola fuente para la regla.
@@ -140,9 +148,12 @@ export async function getLatestArticles(
   if (options.excludeId) query = query.neq("id", options.excludeId);
 
   const { data, error, count } = await query
+    .order("priority", { ascending: false })
     .order("published_at", { ascending: false })
+    .order("id", { ascending: true })
     .range(from, to);
 
+  if (error?.code === RANGE_NOT_SATISFIABLE) return paginate([], 0, page, pageSize);
   if (error) throw new Error(`No se pudieron leer las últimas noticias: ${error.message}`);
 
   const items = (data ?? []).map((row) => mapArticle(row as unknown as ArticleRow, supabaseUrl()));
@@ -168,7 +179,7 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
   return data ? mapArticle(data, supabaseUrl()) : null;
 }
 
-/** Notas publicadas de una sección. */
+/** Notas publicadas de una sección, con el mismo orden que la portada. */
 export async function getArticlesByCategory(
   categorySlug: string,
   options: { page?: number; pageSize?: number; subsection?: string | null } = {},
@@ -197,9 +208,12 @@ export async function getArticlesByCategory(
   if (options.subsection) query = query.eq("subsection", options.subsection);
 
   const { data, error, count } = await query
+    .order("priority", { ascending: false })
     .order("published_at", { ascending: false })
+    .order("id", { ascending: true })
     .range(from, to);
 
+  if (error?.code === RANGE_NOT_SATISFIABLE) return paginate([], 0, page, pageSize);
   if (error)
     throw new Error(`No se pudieron leer las notas de "${categorySlug}": ${error.message}`);
 

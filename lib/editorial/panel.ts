@@ -72,11 +72,20 @@ export async function listPanelArticles(
     if (term) query = query.or(`title.ilike.%${term}%,excerpt.ilike.%${term}%`);
   }
 
-  const { data, error, count } = await query
-    // Los borradores no tienen published_at, así que el orden del panel es por
-    // última modificación: es lo que el editor espera ver arriba.
-    .order("updated_at", { ascending: false })
-    .range(from, from + pageSize - 1);
+  // "Publicadas" se ordena como las ve el lector (tapa, prioridad, fecha) para
+  // que el panel muestre qué va arriba. El resto: los borradores no tienen
+  // published_at, así que el orden es por última modificación, que es lo que
+  // el editor espera ver arriba.
+  const ordered =
+    options.status === "published"
+      ? query
+          .order("is_featured", { ascending: false })
+          .order("priority", { ascending: false })
+          .order("published_at", { ascending: false })
+          .order("id", { ascending: true })
+      : query.order("updated_at", { ascending: false });
+
+  const { data, error, count } = await ordered.range(from, from + pageSize - 1);
 
   if (error) throw new Error(`No se pudo listar el panel: ${error.message}`);
 

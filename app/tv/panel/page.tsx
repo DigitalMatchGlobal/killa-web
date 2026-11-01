@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Fragment } from "react";
 import { Archive, ArrowLeft, ArrowRight, Edit3, Eye, FileText, Plus, Search, Star } from "lucide-react";
 
 import { PanelHeader } from "@/components/panel/panel-header";
@@ -8,6 +9,7 @@ import { formatPanelDate, STATUS_LABELS } from "@/lib/editorial/format";
 import { getPanelCounts, listPanelArticles, PANEL_PAGE_SIZE } from "@/lib/editorial/panel";
 import { isArticleStatus, type ArticleStatus } from "@/lib/editorial/types";
 import { getCategories } from "@/lib/editorial/queries";
+import { hasStalePriority, priorityGroupOf } from "@/lib/editorial/ranking";
 
 /**
  * Tablero del panel: contadores, filtro por estado y el listado paginado de
@@ -144,6 +146,9 @@ export default async function EditorialPanelPage({
         <section className="mt-6 overflow-hidden rounded-2xl border border-line bg-midnight/60">
           <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
             <h2 className="font-display text-sm font-semibold">Publicaciones</h2>
+            {status === "published" ? (
+              <span className="hidden text-xs text-fg-faint sm:inline">Ordenadas como se ven en el portal</span>
+            ) : null}
             <span className="font-mono text-[0.52rem] uppercase tracking-[0.1em] text-fg-faint">
               {result.total} {result.total === 1 ? "nota" : "notas"}
             </span>
@@ -159,9 +164,21 @@ export default async function EditorialPanelPage({
             </p>
           ) : (
             <div className="divide-y divide-line">
-              {result.items.map((article) => (
+              {result.items.map((article, index) => {
+                const group = priorityGroupOf(article);
+                const showGroup =
+                  status === "published" && (index === 0 || priorityGroupOf(result.items[index - 1]).key !== group.key);
+                return (
+                <Fragment key={article.id}>
+                {showGroup ? (
+                  <div className="flex flex-wrap items-baseline gap-x-3 bg-surface/50 px-4 py-2.5 sm:px-5">
+                    <h3 className="font-mono text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-sand">
+                      {group.label}
+                    </h3>
+                    <span className="text-xs text-fg-faint">{group.hint}</span>
+                  </div>
+                ) : null}
                 <article
-                  key={article.id}
                   className="grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:grid-cols-[84px_minmax(0,1fr)_auto] sm:gap-4 sm:px-5"
                 >
                   <div className="relative aspect-square overflow-hidden rounded-lg border border-line bg-surface">
@@ -192,8 +209,13 @@ export default async function EditorialPanelPage({
                       >
                         {STATUS_LABELS[article.status]}
                       </span>
-                      {article.priority > 1 ? (
-                        <span className="text-fg-faint">prioridad {article.priority}</span>
+                      {article.priority !== 3 ? (
+                        <span className="text-fg-faint">
+                          prioridad {article.priority > 3 ? "alta" : "baja"} ({article.priority})
+                        </span>
+                      ) : null}
+                      {hasStalePriority(article) ? (
+                        <span className="text-sand">revisar prioridad</span>
                       ) : null}
                       {article.isFeatured ? (
                         <span className="inline-flex items-center gap-1 text-sand"><Star size={11} fill="currentColor" aria-hidden /> Destacada</span>
@@ -227,7 +249,9 @@ export default async function EditorialPanelPage({
                     </Link>
                   </div>
                 </article>
-              ))}
+                </Fragment>
+                );
+              })}
             </div>
           )}
         </section>

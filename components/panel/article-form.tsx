@@ -74,7 +74,7 @@ export function ArticleForm({
   const [body, setBody] = useState(article?.body ?? "");
   const [categoryId, setCategoryId] = useState(article?.categoryId ?? categories[0]?.id ?? "");
   const [subsection, setSubsection] = useState(article?.subsection ?? "");
-  const [priority, setPriority] = useState(String(article?.priority ?? 1));
+  const [priority, setPriority] = useState(String(article?.priority ?? 3));
   const [isFeatured, setIsFeatured] = useState(article?.isFeatured ?? false);
   const [imageAlt, setImageAlt] = useState(article?.imageAlt ?? "");
   const [byline, setByline] = useState(article?.byline ?? "");
@@ -297,17 +297,39 @@ export function ArticleForm({
               onChange={(event) => setPriority(event.target.value)}
               className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
             >
-              <option value="1">1 — normal</option>
+              <option value="1">1 — baja</option>
               <option value="2">2</option>
-              <option value="3">3 — importante</option>
+              <option value="3">3 — normal</option>
               <option value="4">4</option>
-              <option value="5">5 — muy importante</option>
+              <option value="5">5 — alta</option>
             </select>
             <span className="font-mono text-[0.55rem] leading-relaxed text-fg-faint">
-              Importancia editorial: 1 = normal · 5 = muy importante. Queda guardada
-              para ordenar contenidos en una etapa posterior.
+              Prioridad editorial (1 = baja · 3 = normal · 5 = alta). Define el orden
+              en los listados. La tapa se elige con “Destacada”.
             </span>
           </label>
+
+          <details className="rounded-xl border border-line bg-surface/45 px-4 py-3 text-xs leading-relaxed text-fg-muted">
+            <summary className="cursor-pointer font-semibold text-fg">¿Cómo se ordena el portal?</summary>
+            <ul className="mt-3 space-y-2">
+              <li>
+                <strong className="text-fg">Tapa:</strong> una sola nota, la que marques como
+                “Destacada”. Ocupa el bloque grande de la portada.
+              </li>
+              <li>
+                <strong className="text-fg">Más noticias y secciones:</strong> primero las de prioridad
+                más alta y, entre iguales, las más nuevas.
+              </li>
+              <li>
+                <strong className="text-fg">Qué nivel usar:</strong> 5 = lo más importante de hoy ·
+                3 = normal (casi todas) · 1 = puede esperar.
+              </li>
+              <li>
+                <strong className="text-fg">Ojo:</strong> la prioridad no baja sola. Cuando una nota deje de
+                ser urgente, volvé a ponerla en 3.
+              </li>
+            </ul>
+          </details>
 
           <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface/45 p-4">
             <input
@@ -420,7 +442,7 @@ export function ArticleForm({
               value={byline}
               onChange={(event) => setByline(event.target.value)}
               maxLength={BYLINE_MAX}
-              placeholder="Ej. Nicolás Cardozo o Redacción Killa TV"
+              placeholder="Ej. Redacción o Nombre y apellido del autor"
               className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
             />
             <span className="font-mono text-[0.55rem] leading-relaxed text-fg-faint">

@@ -164,7 +164,7 @@ export function isArticleStatus(value: unknown): value is ArticleStatus {
 
 function toPriority(value: number): ArticlePriority {
   const rounded = Math.trunc(value);
-  return ((rounded >= 1 && rounded <= 5 ? rounded : 1) as ArticlePriority);
+  return ((rounded >= 1 && rounded <= 5 ? rounded : 3) as ArticlePriority);
 }
 
 /**

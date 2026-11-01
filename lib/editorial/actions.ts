@@ -108,7 +108,7 @@ function readDraftForm(formData: FormData) {
     imageAlt: formString(formData, "imageAlt"),
     byline: formString(formData, "byline"),
     featuredImagePath: formString(formData, "featuredImagePath"),
-    priority: formString(formData, "priority") || "1",
+    priority: formString(formData, "priority") || "3",
     isFeatured: formString(formData, "isFeatured"),
     slug: formString(formData, "slug"),
   });

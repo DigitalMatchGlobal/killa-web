@@ -151,10 +151,6 @@ export default async function KillaTvPage() {
                         priority
                       />
                     ) : null}
-                    <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/45 to-transparent" aria-hidden />
-                    <span className="absolute left-4 top-4 rounded-full bg-sand px-3 py-1.5 text-xs font-bold uppercase tracking-[0.09em] text-[#161006] sm:left-5 sm:top-5">
-                      Noticia destacada
-                    </span>
                   </div>
 
                   <div className="p-5 sm:p-6">
@@ -193,10 +189,10 @@ export default async function KillaTvPage() {
             <aside aria-labelledby="latest-cover-title">
               <div className="flex items-center justify-between border-b-2 border-sand pb-3">
                 <h2 id="latest-cover-title" className="font-display text-xl font-bold tracking-tight">
-                  Últimas noticias
+                  Más noticias
                 </h2>
                 <span className="font-mono text-[0.65rem] uppercase tracking-[0.08em] text-fg-faint">
-                  Más recientes
+                  Por importancia
                 </span>
               </div>
               <div className="pt-3 sm:pt-4">
@@ -233,6 +229,14 @@ export default async function KillaTvPage() {
                 <ArticleCard key={article.id} article={article} />
               ))}
             </div>
+            {latest.total > latest.items.length ? (
+              <div className="mt-8 flex justify-center">
+                <Link href="/tv/ultimas" className="btn btn-ghost">
+                  Ver todas las noticias
+                  <ArrowRight size={16} aria-hidden />
+                </Link>
+              </div>
+            ) : null}
           </section>
         ) : null}
 
