@@ -193,7 +193,7 @@ export function ToggleStaffStatusButton({
             type="button"
             onClick={() => setModalType("toggle")}
             disabled={isPending}
-            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[0.7rem] font-medium text-emerald-300 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[0.7rem] font-medium text-emerald-600 dark:text-emerald-300 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
             title="Reactivar cuenta de usuario"
           >
             <UserCheck size={12} />
@@ -204,7 +204,7 @@ export function ToggleStaffStatusButton({
             type="button"
             onClick={() => setModalType("toggle")}
             disabled={isPending}
-            className="inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-[0.7rem] font-medium text-red-300 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line bg-transparent px-2.5 py-1 text-[0.7rem] text-fg-muted hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-500 transition-colors disabled:opacity-50"
             title="Suspender acceso al panel"
           >
             <UserX size={12} />

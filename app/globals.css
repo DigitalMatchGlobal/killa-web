@@ -1,5 +1,50 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * Badges de estado editorial (Panel Killa TV)
+ * Garantizan contraste óptimo tanto en tema claro (#065f46) como en tema oscuro (#6ee7b7).
+ */
+.badge-status-published {
+  background-color: rgba(16, 185, 129, 0.08);
+  color: #065f46;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+:root[data-theme="dark"] .badge-status-published,
+:root:not([data-theme="light"]) .badge-status-published {
+  background-color: rgba(52, 211, 153, 0.1);
+  color: #6ee7b7;
+  border: 1px solid rgba(52, 211, 153, 0.2);
+}
+
+.badge-status-draft {
+  background-color: rgba(217, 119, 6, 0.08);
+  color: #92400e;
+  border: 1px solid rgba(217, 119, 6, 0.25);
+}
+
+:root[data-theme="dark"] .badge-status-draft,
+:root:not([data-theme="light"]) .badge-status-draft {
+  background-color: rgba(233, 208, 160, 0.1);
+  color: #e9d0a0;
+  border: 1px solid rgba(233, 208, 160, 0.25);
+}
+
+.badge-status-archived {
+  background-color: rgba(100, 116, 139, 0.08);
+  color: #475569;
+  border: 1px solid rgba(100, 116, 139, 0.2);
+}
+
+:root[data-theme="dark"] .badge-status-archived,
+:root:not([data-theme="light"]) .badge-status-archived {
+  background-color: rgba(148, 166, 190, 0.1);
+  color: #94a6be;
+  border: 1px solid rgba(148, 166, 190, 0.2);
+}
+
 /*
  * Sistema de diseño Killa
  * ------------------------------------------------------------------

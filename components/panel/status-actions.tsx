@@ -55,12 +55,12 @@ export function StatusActions({ article }: { article: PanelArticle }) {
         </div>
         <span
           className={
-            "rounded-full px-3 py-1 font-mono text-[0.55rem] uppercase tracking-[0.1em] " +
+            "rounded-full px-3 py-1 font-mono text-[0.55rem] uppercase tracking-[0.1em] font-medium " +
             (article.status === "published"
-              ? "bg-emerald-400/12 text-emerald-300"
+              ? "badge-status-published"
               : article.status === "archived"
-                ? "bg-fg-faint/10 text-fg-faint"
-                : "bg-sand/12 text-sand")
+                ? "badge-status-archived"
+                : "badge-status-draft")
           }
         >
           {STATUS_LABELS[article.status] ?? article.status}

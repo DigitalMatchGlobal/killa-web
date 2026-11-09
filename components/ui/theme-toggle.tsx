@@ -5,7 +5,7 @@ import { Moon, Sun } from "lucide-react";
 const THEME_KEY = "killa-color-theme";
 let sequenceId = 0;
 
-export function ThemeToggle() {
+export function ThemeToggle({ className = "size-11" }: { className?: string } = {}) {
   const toggleTheme = () => {
     const root = document.documentElement;
     const nextTheme = root.dataset.theme === "light" ? "dark" : "light";
@@ -33,7 +33,7 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       aria-label="Alternar entre tema claro y oscuro"
       title="Cambiar colores"
-      className="theme-toggle relative grid size-11 shrink-0 place-items-center rounded-full border border-line text-fg-muted transition-[color,border-color,background-color,transform] duration-300 hover:border-cyan/60 hover:bg-fg/[0.04] hover:text-fg active:scale-95"
+      className={`theme-toggle relative grid shrink-0 place-items-center rounded-full border border-line text-fg-muted transition-[color,border-color,background-color,transform] duration-300 hover:border-cyan/60 hover:bg-fg/[0.04] hover:text-fg active:scale-95 ${className}`}
     >
       <Sun size={17} className="theme-icon theme-icon--sun" aria-hidden />
       <Moon size={16} className="theme-icon theme-icon--moon" aria-hidden />

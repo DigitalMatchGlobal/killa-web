@@ -514,7 +514,7 @@ export function ArticleForm({
         ) : null}
 
         {state && state.ok ? (
-          <p className="mt-3 flex items-start gap-2 rounded-xl border border-emerald-400/30 bg-emerald-400/[0.07] px-4 py-3 text-sm text-emerald-200">
+          <p className="mt-3 flex items-start gap-2 rounded-xl border border-emerald-400/30 bg-emerald-400/[0.07] px-4 py-3 text-sm text-emerald-700 dark:text-emerald-200">
             <Check size={16} className="mt-0.5 shrink-0" aria-hidden />
             Cambios guardados.
           </p>

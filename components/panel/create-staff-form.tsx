@@ -68,7 +68,7 @@ export function CreateStaffForm() {
                   <Check size={16} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-emerald-300">
+                  <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
                     ¡Cuenta creada exitosamente para {state.data.displayName}!
                   </p>
                   <p className="mt-1 text-xs text-fg-muted">
@@ -79,7 +79,7 @@ export function CreateStaffForm() {
                       <button
                         type="button"
                         onClick={() => copyCredentials(state.data.email)}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-medium text-emerald-200 hover:bg-emerald-500/25 transition-colors"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-medium text-emerald-800 dark:text-emerald-200 hover:bg-emerald-500/25 transition-colors"
                       >
                         {copied ? <Check size={14} /> : <Copy size={14} />}
                         {copied ? "¡Copiado al portapapeles!" : "Copiar mensaje de bienvenida"}

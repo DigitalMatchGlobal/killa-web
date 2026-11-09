@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Fragment } from "react";
-import { Archive, ArrowLeft, ArrowRight, Edit3, Eye, FileText, Plus, Star, User, X } from "lucide-react";
+import { Archive, ArrowLeft, ArrowRight, Edit3, Eye, FileText, Plus, Star, User, Users, X } from "lucide-react";
 
 import { PanelHeader } from "@/components/panel/panel-header";
 import { PanelFilterBar } from "@/components/panel/panel-filter-bar";
@@ -93,10 +93,18 @@ export default async function EditorialPanelPage({
               Crear, previsualizar, publicar y archivar. Sin asistencia técnica.
             </p>
           </div>
-          <Link href="/tv/panel/notas/nueva" className="btn btn-primary w-full sm:w-auto">
-            <Plus size={17} aria-hidden />
-            Nueva noticia
-          </Link>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+            {profile.role === "admin" && (
+              <Link href="/tv/panel/equipo" className="btn btn-ghost">
+                <Users size={17} aria-hidden />
+                Equipo
+              </Link>
+            )}
+            <Link href="/tv/panel/notas/nueva" className="btn btn-primary">
+              <Plus size={17} aria-hidden />
+              Nueva noticia
+            </Link>
+          </div>
         </div>
 
         {/* Contadores */}
@@ -254,12 +262,12 @@ export default async function EditorialPanelPage({
                           <span className="text-sand">{article.category.name}</span>
                           <span
                             className={
-                              "rounded-full px-2 py-0.5 " +
+                              "rounded-full px-2 py-0.5 font-mono text-[0.52rem] font-medium " +
                               (article.status === "published"
-                                ? "bg-emerald-400/12 text-emerald-300"
+                                ? "badge-status-published"
                                 : article.status === "archived"
-                                  ? "bg-fg-faint/10 text-fg-faint"
-                                  : "bg-sand/12 text-sand")
+                                  ? "badge-status-archived"
+                                  : "badge-status-draft")
                             }
                           >
                             {STATUS_LABELS[article.status]}
