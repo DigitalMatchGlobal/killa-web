@@ -150,11 +150,12 @@ export function ChangePasswordModal() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex min-h-10 items-center gap-2 rounded-full border border-line px-3 text-xs text-fg-muted transition-colors hover:border-sand/60 hover:text-fg"
-        title="Cambiar contraseña de mi cuenta"
+        className="inline-flex size-8 sm:size-auto sm:min-h-9 items-center justify-center gap-1.5 rounded-full border border-line p-0 sm:px-3 text-xs text-fg-muted transition-colors hover:border-sand/60 hover:text-fg"
+        title="Cambiar clave"
+        aria-label="Cambiar clave"
       >
         <KeyRound size={14} aria-hidden />
-        <span className="hidden sm:inline">Cambiar clave</span>
+        <span className="hidden sm:inline">Clave</span>
       </button>
 
       {isMounted && modalContent ? createPortal(modalContent, document.body) : null}

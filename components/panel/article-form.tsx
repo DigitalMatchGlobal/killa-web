@@ -244,10 +244,12 @@ export function ArticleForm({
       action={formAction}
       onSubmit={handleSubmit}
       noValidate
-      className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.72fr)]"
+      className="mt-5 grid grid-cols-1 gap-5 w-full min-w-0 max-w-full lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]"
     >
-      {article ? <input type="hidden" name="id" value={article.id} /> : null}
-      <input type="hidden" name="featuredImagePath" value={imagePath} />
+      <div className="hidden">
+        {article ? <input type="hidden" name="id" value={article.id} /> : null}
+        <input type="hidden" name="featuredImagePath" value={imagePath} />
+      </div>
 
       {validationErrors.length > 0 ? (
         <div
@@ -277,8 +279,8 @@ export function ArticleForm({
         </div>
       ) : null}
 
-      <div className="card p-5 sm:p-7">
-        <div className="grid gap-5">
+      <div className="card p-4 sm:p-7 w-full min-w-0 max-w-full overflow-hidden">
+        <div className="grid gap-5 w-full min-w-0">
           <label className="grid gap-2">
             <span className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
               Sección
@@ -369,7 +371,7 @@ export function ArticleForm({
             <label htmlFor="article-body" className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
               Cuerpo de la nota
             </label>
-            <div className="flex flex-wrap gap-1.5 rounded-xl border border-line bg-surface/55 p-2" aria-label="Herramientas de formato Markdown">
+            <div className="flex flex-wrap gap-1 sm:gap-1.5 rounded-xl border border-line bg-surface/55 p-1.5 sm:p-2 w-full max-w-full" aria-label="Herramientas de formato Markdown">
               {markdownTools.map(({ label, icon: Icon, before, after, sample }) => (
                 <button
                   key={label}
@@ -377,9 +379,9 @@ export function ArticleForm({
                   onClick={() => insertMarkdown(before, after, sample)}
                   aria-label={label}
                   title={label}
-                  className="grid size-10 place-items-center rounded-lg text-fg-muted transition-colors hover:bg-cyan/10 hover:text-cyan"
+                  className="grid size-9 sm:size-10 place-items-center rounded-lg text-fg-muted transition-colors hover:bg-cyan/10 hover:text-cyan shrink-0"
                 >
-                  <Icon size={17} aria-hidden />
+                  <Icon size={16} aria-hidden />
                 </button>
               ))}
             </div>
@@ -573,7 +575,7 @@ export function ArticleForm({
       </div>
 
       {/* --- Vista previa + guardar --- */}
-      <aside className="lg:sticky lg:top-24 lg:self-start">
+      <aside className="w-full min-w-0 max-w-full lg:sticky lg:top-24 lg:self-start">
         <p className="mb-2 font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
           Vista previa
         </p>
@@ -777,7 +779,7 @@ export function ArticleForm({
             </button>
           ) : null}
 
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-2 w-full">
             {article ? (
               <Link
                 href={`/tv/panel/notas/${article.id}/vista-previa`}
@@ -786,19 +788,17 @@ export function ArticleForm({
                 <Eye size={16} aria-hidden />
                 Previsualizar
               </Link>
-            ) : (
-              <span />
-            )}
+            ) : null}
             <button
               type="submit"
               name="intent"
               value="save"
               disabled={pending || uploading}
-              className={`btn px-3 disabled:opacity-60 ${
+              className={`btn px-3 w-full disabled:opacity-60 ${
                 isEditing && article?.status !== "published"
                   ? "btn-ghost"
                   : "bg-sand text-midnight hover:bg-sand/90"
-              }`}
+              } ${!article ? "sm:col-span-2" : ""}`}
             >
               {pending ? "Guardando…" : isEditing ? "Guardar borrador" : "Crear borrador"}
               <Save size={15} aria-hidden />

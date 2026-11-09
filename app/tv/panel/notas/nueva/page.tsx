@@ -17,7 +17,7 @@ export default async function NewArticlePage() {
     <>
       <PanelHeader profile={profile} />
 
-      <main className="shell py-6 sm:py-9">
+      <main className="shell py-6 sm:py-9 w-full min-w-0 max-w-full overflow-x-clip">
         <Link
           href="/tv/panel"
           className="inline-flex items-center gap-2 text-sm text-fg-muted hover:text-fg"
