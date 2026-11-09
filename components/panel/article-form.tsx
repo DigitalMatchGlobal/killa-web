@@ -10,6 +10,7 @@ import {
   Eye,
   Heading2,
   ImagePlus,
+  Info,
   Italic,
   Link2,
   List,
@@ -81,9 +82,11 @@ export function ArticleForm({
   const [imagePath, setImagePath] = useState(article?.featuredImagePath ?? "");
   const [imageError, setImageError] = useState<string | null>(null);
   const [imageWarning, setImageWarning] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [uploading, startUpload] = useTransition();
   const fileInput = useRef<HTMLInputElement>(null);
   const bodyInput = useRef<HTMLTextAreaElement>(null);
+  const titleInputRef = useRef<HTMLTextAreaElement>(null);
 
   const imageUrl = resolveFeaturedImageUrl(imagePath || null, supabaseOrigin);
   const selectedCategory = categories.find((category) => category.id === categoryId);
@@ -138,6 +141,22 @@ export function ArticleForm({
     });
   }
 
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    const trimmedTitle = title.trim();
+    if (trimmedTitle.length < 8) {
+      event.preventDefault();
+      const msg =
+        trimmedTitle.length === 0
+          ? "El título es obligatorio para guardar el borrador (mínimo 8 caracteres)."
+          : `El título debe tener al menos 8 caracteres (actualmente tiene ${trimmedTitle.length}).`;
+      setValidationError(msg);
+      titleInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      titleInputRef.current?.focus();
+      return;
+    }
+    setValidationError(null);
+  }
+
   function insertMarkdown(before: string, after: string, sample: string) {
     const textarea = bodyInput.current;
     if (!textarea) return;
@@ -167,7 +186,12 @@ export function ArticleForm({
   ] as const;
 
   return (
-    <form action={formAction} className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.72fr)]">
+    <form
+      action={formAction}
+      onSubmit={handleSubmit}
+      noValidate
+      className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.72fr)]"
+    >
       {article ? <input type="hidden" name="id" value={article.id} /> : null}
       <input type="hidden" name="featuredImagePath" value={imagePath} />
 
@@ -221,15 +245,32 @@ export function ArticleForm({
               </span>
             </span>
             <textarea
+              ref={titleInputRef}
               name="title"
               value={title}
-              onChange={(event) => setTitle(event.target.value)}
+              onChange={(event) => {
+                setTitle(event.target.value);
+                if (validationError && event.target.value.trim().length >= 8) {
+                  setValidationError(null);
+                }
+              }}
               maxLength={TITLE_MAX}
               rows={3}
-              required
-              minLength={8}
-              className="w-full resize-none rounded-xl border border-line bg-midnight px-4 py-3 font-display text-lg font-semibold leading-snug text-fg outline-none focus:border-sand"
+              placeholder="Escribí un título descriptivo (mínimo 8 caracteres)"
+              className={`w-full resize-none rounded-xl border bg-midnight px-4 py-3 font-display text-lg font-semibold leading-snug text-fg outline-none transition-colors ${
+                validationError ? "border-red-400 focus:border-red-500" : "border-line focus:border-sand"
+              }`}
             />
+            {validationError ? (
+              <p className="flex items-center gap-1.5 text-xs text-red-400 font-medium mt-1">
+                <AlertCircle size={14} className="shrink-0" />
+                {validationError}
+              </p>
+            ) : (
+              <span className="font-mono text-[0.55rem] text-fg-faint">
+                Mínimo 8 caracteres requeridos para guardar el borrador.
+              </span>
+            )}
           </label>
 
           <label className="grid gap-2">
@@ -502,6 +543,99 @@ export function ArticleForm({
             ) : null}
           </div>
         </div>
+
+        {/* Requisitos mínimos / checklist editorial */}
+        <div className="mt-4 rounded-xl border border-line bg-surface/50 p-4 text-xs text-fg-muted">
+          <div className="flex items-center gap-2 font-semibold text-fg">
+            <Info size={14} className="text-sand shrink-0" />
+            <span>{isEditing ? "Requisitos para publicar" : "Requisitos para borrador"}</span>
+          </div>
+
+          {!isEditing ? (
+            <div className="mt-2.5 space-y-2">
+              <ul className="space-y-1.5 font-mono text-[0.62rem]">
+                <li
+                  className={`flex items-center gap-2 ${
+                    title.trim().length >= 8 ? "text-emerald-500 font-medium" : "text-fg-faint"
+                  }`}
+                >
+                  <span className="w-3.5 text-center font-bold">
+                    {title.trim().length >= 8 ? "✓" : "○"}
+                  </span>
+                  <span>Título: mín. 8 caracteres ({title.trim().length}/8)</span>
+                </li>
+              </ul>
+              <p className="text-[0.68rem] text-fg-faint leading-relaxed">
+                Solo necesitás el título para guardar el borrador. Podés completar la bajada, el cuerpo y la foto más adelante desde la edición.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-2.5 space-y-2">
+              <ul className="space-y-1.5 font-mono text-[0.62rem]">
+                <li
+                  className={`flex items-center gap-2 ${
+                    title.trim().length >= 8 ? "text-emerald-500 font-medium" : "text-fg-faint"
+                  }`}
+                >
+                  <span className="w-3.5 text-center font-bold">
+                    {title.trim().length >= 8 ? "✓" : "○"}
+                  </span>
+                  <span>Título ({title.trim().length}/8 mín.)</span>
+                </li>
+                <li
+                  className={`flex items-center gap-2 ${
+                    excerpt.trim().length >= 20 ? "text-emerald-500 font-medium" : "text-fg-faint"
+                  }`}
+                >
+                  <span className="w-3.5 text-center font-bold">
+                    {excerpt.trim().length >= 20 ? "✓" : "○"}
+                  </span>
+                  <span>Bajada ({excerpt.trim().length}/20 mín.)</span>
+                </li>
+                <li
+                  className={`flex items-center gap-2 ${
+                    body.trim().length >= 120 ? "text-emerald-500 font-medium" : "text-fg-faint"
+                  }`}
+                >
+                  <span className="w-3.5 text-center font-bold">
+                    {body.trim().length >= 120 ? "✓" : "○"}
+                  </span>
+                  <span>Cuerpo ({body.trim().length}/120 mín.)</span>
+                </li>
+                <li
+                  className={`flex items-center gap-2 ${
+                    imagePath && imageAlt.trim().length >= 10
+                      ? "text-emerald-500 font-medium"
+                      : "text-fg-faint"
+                  }`}
+                >
+                  <span className="w-3.5 text-center font-bold">
+                    {imagePath && imageAlt.trim().length >= 10 ? "✓" : "○"}
+                  </span>
+                  <span>
+                    Foto con descripción (
+                    {!imagePath
+                      ? "falta foto"
+                      : imageAlt.trim().length < 10
+                        ? `alt: ${imageAlt.trim().length}/10`
+                        : "completo"}
+                    )
+                  </span>
+                </li>
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {validationError ? (
+          <p
+            role="alert"
+            className="mt-3 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-800 dark:text-amber-300"
+          >
+            <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+            <span>{validationError}</span>
+          </p>
+        ) : null}
 
         {state && !state.ok ? (
           <p

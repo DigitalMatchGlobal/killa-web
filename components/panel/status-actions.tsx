@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
-import { AlertCircle, Archive, FileText, Send } from "lucide-react";
+import { AlertCircle, Archive, Eye, FileText, Send } from "lucide-react";
 
 import {
   archiveArticleAction,
@@ -77,7 +78,8 @@ export function StatusActions({ article }: { article: PanelArticle }) {
         </p>
       ) : null}
 
-      <div className="mt-5 grid gap-2 sm:grid-cols-2">
+      <div className="mt-5 grid gap-2 sm:grid-cols-3">
+        {/* Publicar o Volver a borrador */}
         {article.status !== "published" ? (
           <form action={publish}>
             <input type="hidden" name="id" value={article.id} />
@@ -104,6 +106,16 @@ export function StatusActions({ article }: { article: PanelArticle }) {
           </form>
         )}
 
+        {/* Previsualizar */}
+        <Link
+          href={`/tv/panel/notas/${article.id}/vista-previa`}
+          className="btn btn-ghost w-full"
+        >
+          <Eye size={15} aria-hidden />
+          Previsualizar
+        </Link>
+
+        {/* Archivar */}
         {article.status !== "archived" ? (
           <form action={archive}>
             <input type="hidden" name="id" value={article.id} />

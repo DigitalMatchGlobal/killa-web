@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
 
 import { ArticleForm } from "@/components/panel/article-form";
 import { PanelHeader } from "@/components/panel/panel-header";
@@ -15,11 +15,15 @@ export const dynamic = "force-dynamic";
 
 export default async function EditArticlePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ creada?: string }>;
 }) {
   const profile = await requireEditorialStaff();
   const { id } = await params;
+  const query = await searchParams;
+  const isNewlyCreated = query.creada === "1";
 
   const [article, categories] = await Promise.all([
     getPanelArticleById(id),
@@ -52,6 +56,18 @@ export default async function EditArticlePage({
             </Link>
           ) : null}
         </div>
+
+        {isNewlyCreated ? (
+          <div className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-800 dark:text-emerald-300">
+            <CheckCircle2 size={18} className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+            <div>
+              <p className="font-semibold text-sm">¡Borrador creado con éxito!</p>
+              <p className="mt-0.5 text-xs text-fg-muted">
+                Tu noticia ya está guardada. Podés previsualizarla, seguir completando los campos o publicarla aquí arriba cuando esté lista.
+              </p>
+            </div>
+          </div>
+        ) : null}
 
         <div className="mt-5">
           <p className="eyebrow text-sand">Editar</p>
