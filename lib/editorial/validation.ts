@@ -151,6 +151,11 @@ export function firstIssue(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Los datos no son válidos.";
 }
 
+/** Todos los mensajes de error de un ZodError, listos para mostrar en el panel. */
+export function allIssues(error: z.ZodError): string[] {
+  return error.issues.map((issue) => issue.message);
+}
+
 /**
  * Firma real del archivo (magic bytes).
  *

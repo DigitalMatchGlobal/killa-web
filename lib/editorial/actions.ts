@@ -11,6 +11,7 @@ import { getPanelArticleById } from "./panel";
 import {
   IMAGE_EXTENSIONS,
   IMAGE_MAX_BYTES,
+  allIssues,
   articleDraftSchema,
   credentialsSchema,
   firstIssue,
@@ -37,9 +38,13 @@ import type { ArticleStatus } from "./types";
 
 export type ActionResult<T = undefined> =
   | ({ ok: true } & (T extends undefined ? { data?: undefined } : { data: T }))
-  | { ok: false; error: string };
+  | { ok: false; error: string; issues?: string[] };
 
-const fail = (error: string): ActionResult<never> => ({ ok: false, error });
+const fail = (error: string, issues?: string[]): ActionResult<never> => ({
+  ok: false,
+  error,
+  issues,
+});
 
 const BUCKET = "killa-news";
 
@@ -174,32 +179,47 @@ export async function saveArticleAction(
   if (!parsed.success) return fail(firstIssue(parsed.error));
   const input = parsed.data;
 
-  // Editar una nota YA publicada no puede dejarla sin imagen ni sin alt: se
-  // exigen los mismos requisitos que para publicar.
-  if (current.status === "published") {
+  const intent = formString(formData, "intent");
+  const willPublish = intent === "publish" || current.status === "published";
+
+  // Editar una nota YA publicada o pedir publicación directa exige cumplir todos los requisitos
+  if (willPublish) {
     const publishable = publishableSchema.safeParse(input);
-    if (!publishable.success) return fail(firstIssue(publishable.error));
+    if (!publishable.success) {
+      const issues = allIssues(publishable.error);
+      const summary =
+        issues.length === 1
+          ? issues[0]
+          : `Para publicar faltan completar ${issues.length} requisitos.`;
+      return fail(summary, issues);
+    }
   }
 
   const supabase = await createSupabaseServerClient();
+  const updatePayload: Record<string, unknown> = {
+    title: input.title,
+    excerpt: input.excerpt,
+    body: input.body,
+    category_id: input.categoryId,
+    subsection: input.subsection,
+    featured_image_path: input.featuredImagePath,
+    image_alt: input.imageAlt,
+    // Vaciar el campo guarda null y retira la firma del portal.
+    byline: input.byline,
+    priority: input.priority,
+    is_featured: input.isFeatured,
+    // El slug de una nota publicada NO se cambia: los links compartidos por
+    // WhatsApp dejarían de funcionar. Sólo se reescribe si sigue en borrador.
+    ...(current.status === "published" ? {} : { slug: input.slug ?? input.title }),
+  };
+
+  if (intent === "publish" && current.status !== "published") {
+    updatePayload.status = "published" satisfies ArticleStatus;
+  }
+
   const { error } = await supabase
     .from("articles")
-    .update({
-      title: input.title,
-      excerpt: input.excerpt,
-      body: input.body,
-      category_id: input.categoryId,
-      subsection: input.subsection,
-      featured_image_path: input.featuredImagePath,
-      image_alt: input.imageAlt,
-      // Vaciar el campo guarda null y retira la firma del portal.
-      byline: input.byline,
-      priority: input.priority,
-      is_featured: input.isFeatured,
-      // El slug de una nota publicada NO se cambia: los links compartidos por
-      // WhatsApp dejarían de funcionar. Sólo se reescribe si sigue en borrador.
-      ...(current.status === "published" ? {} : { slug: input.slug ?? input.title }),
-    })
+    .update(updatePayload)
     .eq("id", id);
 
   if (error?.code === "23505" && input.isFeatured) {
@@ -240,7 +260,14 @@ export async function publishArticleAction(
     isFeatured: current.isFeatured,
     slug: current.slug,
   });
-  if (!parsed.success) return fail(firstIssue(parsed.error));
+  if (!parsed.success) {
+    const issues = allIssues(parsed.error);
+    const summary =
+      issues.length === 1
+        ? issues[0]
+        : `Para publicar faltan completar ${issues.length} requisitos.`;
+    return fail(summary, issues);
+  }
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase

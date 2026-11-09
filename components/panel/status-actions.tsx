@@ -6,7 +6,6 @@ import { AlertCircle, Archive, Eye, FileText, Send } from "lucide-react";
 
 import {
   archiveArticleAction,
-  publishArticleAction,
   unpublishArticleAction,
   type ActionResult,
 } from "@/lib/editorial/actions";
@@ -24,10 +23,6 @@ import type { PanelArticle } from "@/lib/editorial/types";
  * bajada y cuerpo mínimos). Si falta algo, el mensaje aparece acá.
  */
 export function StatusActions({ article }: { article: PanelArticle }) {
-  const [publishState, publish, publishing] = useActionState<ActionResult | null, FormData>(
-    publishArticleAction,
-    null,
-  );
   const [archiveState, archive, archiving] = useActionState<ActionResult | null, FormData>(
     archiveArticleAction,
     null,
@@ -38,7 +33,6 @@ export function StatusActions({ article }: { article: PanelArticle }) {
   );
 
   const error =
-    (publishState && !publishState.ok && publishState.error) ||
     (archiveState && !archiveState.ok && archiveState.error) ||
     (draftState && !draftState.ok && draftState.error) ||
     null;
@@ -81,17 +75,16 @@ export function StatusActions({ article }: { article: PanelArticle }) {
       <div className="mt-5 grid gap-2 sm:grid-cols-3">
         {/* Publicar o Volver a borrador */}
         {article.status !== "published" ? (
-          <form action={publish}>
-            <input type="hidden" name="id" value={article.id} />
-            <button
-              type="submit"
-              disabled={publishing}
-              className="btn bg-sand w-full text-midnight hover:bg-sand/90 disabled:opacity-60"
-            >
-              {publishing ? "Publicando…" : "Publicar"}
-              <Send size={15} aria-hidden />
-            </button>
-          </form>
+          <button
+            type="submit"
+            form="article-edit-form"
+            name="intent"
+            value="publish"
+            className="btn bg-sand w-full text-midnight hover:bg-sand/90"
+          >
+            Publicar
+            <Send size={15} aria-hidden />
+          </button>
         ) : (
           <form action={toDraft}>
             <input type="hidden" name="id" value={article.id} />

@@ -17,6 +17,7 @@ import {
   ListOrdered,
   Quote,
   Save,
+  Send,
   Upload,
 } from "lucide-react";
 
@@ -82,11 +83,14 @@ export function ArticleForm({
   const [imagePath, setImagePath] = useState(article?.featuredImagePath ?? "");
   const [imageError, setImageError] = useState<string | null>(null);
   const [imageWarning, setImageWarning] = useState<string | null>(null);
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [uploading, startUpload] = useTransition();
   const fileInput = useRef<HTMLInputElement>(null);
   const bodyInput = useRef<HTMLTextAreaElement>(null);
   const titleInputRef = useRef<HTMLTextAreaElement>(null);
+  const excerptInputRef = useRef<HTMLTextAreaElement>(null);
+  const imageSectionRef = useRef<HTMLDivElement>(null);
+  const imageAltInputRef = useRef<HTMLInputElement>(null);
 
   const imageUrl = resolveFeaturedImageUrl(imagePath || null, supabaseOrigin);
   const selectedCategory = categories.find((category) => category.id === categoryId);
@@ -142,22 +146,68 @@ export function ArticleForm({
   }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    const trimmedTitle = title.trim();
-    if (trimmedTitle.length < 8) {
-      event.preventDefault();
-      const msg =
-        trimmedTitle.length === 0
-          ? "El título es obligatorio para guardar el borrador (mínimo 8 caracteres)."
-          : `El título debe tener al menos 8 caracteres (actualmente tiene ${trimmedTitle.length}).`;
-      setValidationError(msg);
-      titleInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      titleInputRef.current?.focus();
+    const submitter = (event.nativeEvent as SubmitEvent)?.submitter as HTMLButtonElement | null;
+    const isPublish = submitter?.value === "publish";
+
+    if (!isPublish) {
+      const trimmedTitle = title.trim();
+      if (trimmedTitle.length < 8) {
+        event.preventDefault();
+        const msg =
+          trimmedTitle.length === 0
+            ? "El título es obligatorio para guardar el borrador (mínimo 8 caracteres)."
+            : `El título debe tener al menos 8 caracteres (actualmente tiene ${trimmedTitle.length}).`;
+        setValidationErrors([msg]);
+        titleInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        titleInputRef.current?.focus();
+        return;
+      }
+      setValidationErrors([]);
+      if (!isEditing && typeof window !== "undefined") {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      }
       return;
     }
-    setValidationError(null);
-    if (!isEditing && typeof window !== "undefined") {
-      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+
+    // Comprobación de requisitos indispensables para publicar
+    const missing: string[] = [];
+    if (title.trim().length < 8) {
+      missing.push(`Título: necesita al menos 8 caracteres (actualmente tiene ${title.trim().length}).`);
     }
+    if (excerpt.trim().length < 20) {
+      missing.push(`Bajada: necesita al menos 20 caracteres (actualmente tiene ${excerpt.trim().length}).`);
+    }
+    if (body.trim().length < 120) {
+      missing.push(`Cuerpo: necesita al menos 120 caracteres (actualmente tiene ${body.trim().length}).`);
+    }
+    if (!imagePath) {
+      missing.push("Foto destacada: es obligatoria para publicar.");
+    } else if (imageAlt.trim().length < 10) {
+      missing.push(`Texto descriptivo de la foto: necesita al menos 10 caracteres (actualmente tiene ${imageAlt.trim().length}).`);
+    }
+
+    if (missing.length > 0) {
+      event.preventDefault();
+      setValidationErrors(missing);
+      if (title.trim().length < 8) {
+        titleInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        titleInputRef.current?.focus();
+      } else if (excerpt.trim().length < 20) {
+        excerptInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        excerptInputRef.current?.focus();
+      } else if (body.trim().length < 120) {
+        bodyInput.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        bodyInput.current?.focus();
+      } else if (!imagePath) {
+        imageSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else if (imageAlt.trim().length < 10) {
+        imageAltInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        imageAltInputRef.current?.focus();
+      }
+      return;
+    }
+
+    setValidationErrors([]);
   }
 
   function insertMarkdown(before: string, after: string, sample: string) {
@@ -190,6 +240,7 @@ export function ArticleForm({
 
   return (
     <form
+      id="article-edit-form"
       action={formAction}
       onSubmit={handleSubmit}
       noValidate
@@ -197,6 +248,34 @@ export function ArticleForm({
     >
       {article ? <input type="hidden" name="id" value={article.id} /> : null}
       <input type="hidden" name="featuredImagePath" value={imagePath} />
+
+      {validationErrors.length > 0 ? (
+        <div
+          role="alert"
+          className="col-span-full rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-800 dark:text-amber-300"
+        >
+          <div className="flex items-start gap-3">
+            <AlertCircle size={18} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+            <div className="flex-1">
+              <p className="font-semibold text-sm">
+                {validationErrors.length === 1
+                  ? validationErrors[0]
+                  : "Para publicar la noticia faltan completar los siguientes requisitos:"}
+              </p>
+              {validationErrors.length > 1 ? (
+                <ul className="mt-2 space-y-1 font-mono text-[0.68rem]">
+                  {validationErrors.map((err, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="font-bold">•</span>
+                      <span>{err}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="card p-5 sm:p-7">
         <div className="grid gap-5">
@@ -253,27 +332,16 @@ export function ArticleForm({
               value={title}
               onChange={(event) => {
                 setTitle(event.target.value);
-                if (validationError && event.target.value.trim().length >= 8) {
-                  setValidationError(null);
-                }
+                if (validationErrors.length > 0) setValidationErrors([]);
               }}
               maxLength={TITLE_MAX}
               rows={3}
               placeholder="Escribí un título descriptivo (mínimo 8 caracteres)"
-              className={`w-full resize-none rounded-xl border bg-midnight px-4 py-3 font-display text-lg font-semibold leading-snug text-fg outline-none transition-colors ${
-                validationError ? "border-red-400 focus:border-red-500" : "border-line focus:border-sand"
-              }`}
+              className="w-full resize-none rounded-xl border border-line bg-midnight px-4 py-3 font-display text-lg font-semibold leading-snug text-fg outline-none focus:border-sand"
             />
-            {validationError ? (
-              <p className="flex items-center gap-1.5 text-xs text-red-400 font-medium mt-1">
-                <AlertCircle size={14} className="shrink-0" />
-                {validationError}
-              </p>
-            ) : (
-              <span className="font-mono text-[0.55rem] text-fg-faint">
-                Mínimo 8 caracteres requeridos para guardar el borrador.
-              </span>
-            )}
+            <span className="font-mono text-[0.55rem] text-fg-faint">
+              Mínimo 8 caracteres requeridos para guardar el borrador.
+            </span>
           </label>
 
           <label className="grid gap-2">
@@ -284,9 +352,13 @@ export function ArticleForm({
               </span>
             </span>
             <textarea
+              ref={excerptInputRef}
               name="excerpt"
               value={excerpt}
-              onChange={(event) => setExcerpt(event.target.value)}
+              onChange={(event) => {
+                setExcerpt(event.target.value);
+                if (validationErrors.length > 0) setValidationErrors([]);
+              }}
               maxLength={EXCERPT_MAX}
               rows={3}
               className="w-full resize-none rounded-xl border border-line bg-midnight px-4 py-3 text-base leading-relaxed text-fg outline-none focus:border-sand sm:text-sm"
@@ -392,7 +464,7 @@ export function ArticleForm({
           </label>
 
           {/* --- Imagen destacada --- */}
-          <div>
+          <div ref={imageSectionRef}>
             <p className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
               Imagen destacada
             </p>
@@ -458,10 +530,14 @@ export function ArticleForm({
                 </span>
               </span>
               <input
+                ref={imageAltInputRef}
                 type="text"
                 name="imageAlt"
                 value={imageAlt}
-                onChange={(event) => setImageAlt(event.target.value)}
+                onChange={(event) => {
+                  setImageAlt(event.target.value);
+                  if (validationErrors.length > 0) setValidationErrors([]);
+                }}
                 maxLength={IMAGE_ALT_MAX}
                 placeholder="Qué se ve en la foto"
                 className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
@@ -630,24 +706,54 @@ export function ArticleForm({
           )}
         </div>
 
-        {validationError ? (
-          <p
+        {validationErrors.length > 0 ? (
+          <div
             role="alert"
-            className="mt-3 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-800 dark:text-amber-300"
+            className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-800 dark:text-amber-300"
           >
-            <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
-            <span>{validationError}</span>
-          </p>
+            <div className="flex items-start gap-2">
+              <AlertCircle size={16} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+              <div className="flex-1">
+                <p className="font-semibold">
+                  {validationErrors.length === 1 ? validationErrors[0] : "Requisitos pendientes:"}
+                </p>
+                {validationErrors.length > 1 ? (
+                  <ul className="mt-1.5 space-y-1 font-mono text-[0.62rem]">
+                    {validationErrors.map((err, i) => (
+                      <li key={i} className="flex items-start gap-1.5">
+                        <span className="font-bold">•</span>
+                        <span>{err}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            </div>
+          </div>
         ) : null}
 
         {state && !state.ok ? (
-          <p
+          <div
             role="alert"
-            className="mt-3 flex items-start gap-2 rounded-xl border border-red-400/30 bg-red-400/[0.07] px-4 py-3 text-sm text-red-200"
+            className="mt-3 rounded-xl border border-red-400/30 bg-red-400/[0.07] px-4 py-3 text-sm text-red-200"
           >
-            <AlertCircle size={16} className="mt-0.5 shrink-0" aria-hidden />
-            {state.error}
-          </p>
+            <div className="flex items-start gap-2">
+              <AlertCircle size={16} className="mt-0.5 shrink-0 text-red-400" aria-hidden />
+              <div className="flex-1">
+                <p className="font-semibold text-xs text-red-100">{state.error}</p>
+                {state.issues && state.issues.length > 1 ? (
+                  <ul className="mt-1.5 space-y-1 font-mono text-[0.62rem] text-red-200/90">
+                    {state.issues.map((issue, idx) => (
+                      <li key={idx} className="flex items-start gap-1.5">
+                        <span className="font-bold text-red-400">•</span>
+                        <span>{issue}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            </div>
+          </div>
         ) : null}
 
         {state && state.ok ? (
@@ -657,26 +763,47 @@ export function ArticleForm({
           </p>
         ) : null}
 
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          {article ? (
-            <Link
-              href={`/tv/panel/notas/${article.id}/vista-previa`}
-              className="btn btn-ghost px-3"
+        <div className="mt-4 grid gap-2">
+          {isEditing && article?.status !== "published" ? (
+            <button
+              type="submit"
+              name="intent"
+              value="publish"
+              disabled={pending || uploading}
+              className="btn bg-sand w-full text-midnight hover:bg-sand/90 disabled:opacity-60"
             >
-              <Eye size={16} aria-hidden />
-              Previsualizar
-            </Link>
-          ) : (
-            <span />
-          )}
-          <button
-            type="submit"
-            disabled={pending || uploading}
-            className="btn bg-sand px-3 text-midnight hover:bg-sand/90 disabled:opacity-60"
-          >
-            {pending ? "Guardando…" : isEditing ? "Guardar cambios" : "Crear borrador"}
-            <Save size={15} aria-hidden />
-          </button>
+              {pending ? "Publicando…" : "Publicar noticia"}
+              <Send size={15} aria-hidden />
+            </button>
+          ) : null}
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            {article ? (
+              <Link
+                href={`/tv/panel/notas/${article.id}/vista-previa`}
+                className="btn btn-ghost px-3"
+              >
+                <Eye size={16} aria-hidden />
+                Previsualizar
+              </Link>
+            ) : (
+              <span />
+            )}
+            <button
+              type="submit"
+              name="intent"
+              value="save"
+              disabled={pending || uploading}
+              className={`btn px-3 disabled:opacity-60 ${
+                isEditing && article?.status !== "published"
+                  ? "btn-ghost"
+                  : "bg-sand text-midnight hover:bg-sand/90"
+              }`}
+            >
+              {pending ? "Guardando…" : isEditing ? "Guardar borrador" : "Crear borrador"}
+              <Save size={15} aria-hidden />
+            </button>
+          </div>
         </div>
       </aside>
     </form>
