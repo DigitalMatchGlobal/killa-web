@@ -37,7 +37,7 @@ export default async function EditArticlePage({
     <>
       <PanelHeader profile={profile} />
 
-      <main id="panel-nota-top" className="shell py-6 sm:py-9 scroll-mt-20 w-full min-w-0 max-w-full overflow-x-clip">
+      <main id="panel-nota-top" className="shell py-6 sm:py-9 scroll-mt-20 w-full min-w-0 max-w-full">
         <ScrollToTopOnMount force={isNewlyCreated} />
 
         <div className="flex flex-wrap items-center justify-between gap-3">

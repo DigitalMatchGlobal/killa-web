@@ -151,7 +151,6 @@ html {
   scroll-behavior: smooth;
   /* el header fijo no puede tapar el título de la sección al anclar */
   scroll-padding-top: 5rem;
-  overflow-x: clip;
 }
 
 body {
@@ -161,7 +160,7 @@ body {
   font-family: var(--font-body);
   line-height: 1.65;
   letter-spacing: -0.011em;
-  overflow-x: clip;
+  overflow-x: hidden;
   transition: background-color 0.9s ease-in-out, color 0.72s ease-in-out;
 }
 

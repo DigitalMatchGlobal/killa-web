@@ -244,7 +244,7 @@ export function ArticleForm({
       action={formAction}
       onSubmit={handleSubmit}
       noValidate
-      className="mt-5 grid grid-cols-1 gap-5 w-full min-w-0 max-w-full lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]"
+      className="mt-5 flex flex-col gap-5 w-full min-w-0 max-w-full lg:grid lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]"
     >
       <div className="hidden">
         {article ? <input type="hidden" name="id" value={article.id} /> : null}
@@ -279,9 +279,9 @@ export function ArticleForm({
         </div>
       ) : null}
 
-      <div className="card p-4 sm:p-7 w-full min-w-0 max-w-full overflow-hidden">
-        <div className="grid gap-5 w-full min-w-0">
-          <label className="grid gap-2">
+      <div className="card p-4 sm:p-7 w-full min-w-0 max-w-full">
+        <div className="flex flex-col gap-5 w-full min-w-0">
+          <label className="flex flex-col gap-2 w-full min-w-0">
             <span className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
               Sección
             </span>
@@ -292,7 +292,7 @@ export function ArticleForm({
                 setCategoryId(event.target.value);
                 setSubsection("");
               }}
-              className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
+              className="min-h-12 w-full min-w-0 max-w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
             >
               <option value="">Sin sección</option>
               {categories.map((category) => (
@@ -304,7 +304,7 @@ export function ArticleForm({
           </label>
 
           {subsectionOptions.length > 0 ? (
-            <label className="grid gap-2">
+            <label className="flex flex-col gap-2 w-full min-w-0">
               <span className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
                 Subsección (opcional)
               </span>
@@ -312,16 +312,16 @@ export function ArticleForm({
                 name="subsection"
                 value={subsection}
                 onChange={(event) => setSubsection(event.target.value)}
-                className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
+                className="min-h-12 w-full min-w-0 max-w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
               >
                 <option value="">Sin subsección</option>
                 {subsectionOptions.map((option) => <option key={option} value={option}>{option}</option>)}
               </select>
-              <span className="text-xs text-fg-faint">Ayuda a organizar la sección sin sobrecargar el menú principal.</span>
+              <span className="text-xs text-fg-faint leading-normal">Ayuda a organizar la sección sin sobrecargar el menú principal.</span>
             </label>
           ) : <input type="hidden" name="subsection" value="" />}
 
-          <label className="grid gap-2">
+          <label className="flex flex-col gap-2 w-full min-w-0">
             <span className="flex items-center justify-between gap-3 font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
               Título
               <span>
@@ -338,15 +338,15 @@ export function ArticleForm({
               }}
               maxLength={TITLE_MAX}
               rows={3}
-              placeholder="Escribí un título descriptivo (mínimo 8 caracteres)"
-              className="w-full resize-none rounded-xl border border-line bg-midnight px-4 py-3 font-display text-lg font-semibold leading-snug text-fg outline-none focus:border-sand"
+              placeholder="Título descriptivo (mínimo 8 caracteres)"
+              className="w-full min-w-0 max-w-full resize-none rounded-xl border border-line bg-midnight px-4 py-3 font-display text-base sm:text-lg font-semibold leading-snug text-fg outline-none focus:border-sand"
             />
-            <span className="font-mono text-[0.55rem] text-fg-faint">
+            <span className="font-mono text-[0.55rem] text-fg-faint leading-normal">
               Mínimo 8 caracteres requeridos para guardar el borrador.
             </span>
           </label>
 
-          <label className="grid gap-2">
+          <label className="flex flex-col gap-2 w-full min-w-0">
             <span className="flex items-center justify-between gap-3 font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
               Bajada
               <span>
@@ -363,11 +363,11 @@ export function ArticleForm({
               }}
               maxLength={EXCERPT_MAX}
               rows={3}
-              className="w-full resize-none rounded-xl border border-line bg-midnight px-4 py-3 text-base leading-relaxed text-fg outline-none focus:border-sand sm:text-sm"
+              className="w-full min-w-0 max-w-full resize-none rounded-xl border border-line bg-midnight px-4 py-3 text-base leading-relaxed text-fg outline-none focus:border-sand sm:text-sm"
             />
           </label>
 
-          <div className="grid gap-2">
+          <div className="flex flex-col gap-2 w-full min-w-0">
             <label htmlFor="article-body" className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
               Cuerpo de la nota
             </label>
@@ -392,20 +392,20 @@ export function ArticleForm({
               value={body}
               onChange={(event) => setBody(event.target.value)}
               rows={14}
-              className="w-full rounded-xl border border-line bg-midnight px-4 py-3 text-base leading-relaxed text-fg outline-none focus:border-sand sm:text-sm"
+              className="w-full min-w-0 max-w-full rounded-xl border border-line bg-midnight px-4 py-3 text-base leading-relaxed text-fg outline-none focus:border-sand sm:text-sm"
             />
             <span className="font-mono text-[0.55rem] leading-relaxed text-fg-faint">
               Podés usar formato Markdown. Si no lo conocés, usá los botones de arriba.
             </span>
-            <details className="rounded-xl border border-line bg-surface/35 p-4">
+            <details className="rounded-xl border border-line bg-surface/35 p-4 w-full min-w-0">
               <summary className="cursor-pointer text-sm font-semibold text-fg">Vista previa del cuerpo</summary>
-              <div className="mt-4 border-t border-line pt-1">
+              <div className="mt-4 border-t border-line pt-1 overflow-x-auto">
                 <MarkdownContent body={body} compact />
               </div>
             </details>
           </div>
 
-          <label className="grid gap-2">
+          <label className="flex flex-col gap-2 w-full min-w-0">
             <span className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
               Prioridad editorial
             </span>
@@ -413,7 +413,7 @@ export function ArticleForm({
               name="priority"
               value={priority}
               onChange={(event) => setPriority(event.target.value)}
-              className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
+              className="min-h-12 w-full min-w-0 max-w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
             >
               <option value="1">1 — baja</option>
               <option value="2">2</option>
@@ -427,7 +427,7 @@ export function ArticleForm({
             </span>
           </label>
 
-          <details className="rounded-xl border border-line bg-surface/45 px-4 py-3 text-xs leading-relaxed text-fg-muted">
+          <details className="rounded-xl border border-line bg-surface/45 px-4 py-3 text-xs leading-relaxed text-fg-muted w-full min-w-0">
             <summary className="cursor-pointer font-semibold text-fg">¿Cómo se ordena el portal?</summary>
             <ul className="mt-3 space-y-2">
               <li>
@@ -449,15 +449,15 @@ export function ArticleForm({
             </ul>
           </details>
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface/45 p-4">
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface/45 p-4 w-full min-w-0">
             <input
               type="checkbox"
               name="isFeatured"
               checked={isFeatured}
               onChange={(event) => setIsFeatured(event.target.checked)}
-              className="mt-1 size-4 accent-cyan"
+              className="mt-1 size-4 accent-cyan shrink-0"
             />
-            <span>
+            <span className="min-w-0 flex-1">
               <span className="block text-sm font-semibold text-fg">Mostrar como noticia destacada</span>
               <span className="mt-1 block text-xs leading-relaxed text-fg-faint">
                 Ocupa el bloque principal de la portada. Al elegirla, la destacada anterior se desmarca automáticamente.
@@ -466,7 +466,7 @@ export function ArticleForm({
           </label>
 
           {/* --- Imagen destacada --- */}
-          <div ref={imageSectionRef}>
+          <div ref={imageSectionRef} className="flex flex-col gap-2 w-full min-w-0">
             <p className="font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
               Imagen destacada
             </p>
@@ -482,12 +482,12 @@ export function ArticleForm({
 
             <label
               htmlFor="featured-image-input"
-              className="mt-2 flex min-h-24 w-full cursor-pointer items-center gap-4 rounded-xl border border-dashed border-line-strong bg-midnight/55 px-4 py-3 text-left transition-colors hover:border-sand/60"
+              className="mt-2 flex min-h-24 w-full max-w-full min-w-0 cursor-pointer items-center gap-3 sm:gap-4 rounded-xl border border-dashed border-line-strong bg-midnight/55 p-3 sm:px-4 sm:py-3 text-left transition-colors hover:border-sand/60"
             >
               <span className="grid size-10 shrink-0 place-items-center rounded-full bg-sand/10 text-sand">
                 {imagePath ? <Check size={18} aria-hidden /> : <Upload size={18} aria-hidden />}
               </span>
-              <span className="min-w-0">
+              <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold text-fg">
                   {uploading
                     ? "Subiendo…"
@@ -495,8 +495,8 @@ export function ArticleForm({
                       ? "Cambiar la imagen"
                       : "Elegir una imagen"}
                 </span>
-                <span className="mt-0.5 block truncate text-xs text-fg-faint">
-                  JPG, PNG o WebP · ideal 1600×900 · máximo 3 MB
+                <span className="mt-0.5 block text-xs text-fg-faint leading-normal">
+                  JPG, PNG o WebP · ideal 1600×900 · máx. 3 MB
                 </span>
               </span>
             </label>
@@ -504,27 +504,27 @@ export function ArticleForm({
             {imageError ? (
               <p
                 role="alert"
-                className="mt-2 flex items-start gap-2 rounded-xl border border-red-400/30 bg-red-400/[0.07] px-4 py-3 text-sm text-red-200"
+                className="mt-2 flex items-start gap-2 rounded-xl border border-red-400/30 bg-red-400/[0.07] px-4 py-3 text-sm text-red-200 w-full min-w-0"
               >
                 <AlertCircle size={16} className="mt-0.5 shrink-0" aria-hidden />
-                {imageError}
+                <span className="flex-1">{imageError}</span>
               </p>
             ) : null}
 
             {imageWarning ? (
-              <p className="mt-2 rounded-xl border border-cyan/25 bg-cyan/[0.06] px-4 py-3 text-sm text-fg-muted">
+              <p className="mt-2 rounded-xl border border-cyan/25 bg-cyan/[0.06] px-4 py-3 text-sm text-fg-muted w-full min-w-0">
                 {imageWarning}
               </p>
             ) : null}
 
-            <p className="mt-3 rounded-xl border border-line bg-surface/35 px-4 py-3 text-xs leading-relaxed text-fg-muted">
+            <p className="mt-3 rounded-xl border border-line bg-surface/35 px-4 py-3 text-xs leading-relaxed text-fg-muted w-full min-w-0">
               <strong className="font-semibold text-fg">Encuadre editorial 16:9.</strong>{" "}
               El portal respeta el formato 1600×900. Para que también funcione bien al compartir,
               mantené logos, personas y textos dentro de la zona central, dejando cerca de un 10% de
               margen en cada borde.
             </p>
 
-            <label className="mt-4 grid gap-2">
+            <label className="mt-4 flex flex-col gap-2 w-full min-w-0">
               <span className="flex items-center justify-between gap-3 font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
                 Texto alternativo
                 <span>
@@ -542,7 +542,7 @@ export function ArticleForm({
                 }}
                 maxLength={IMAGE_ALT_MAX}
                 placeholder="Qué se ve en la foto"
-                className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
+                className="min-h-12 w-full min-w-0 max-w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
               />
               <span className="font-mono text-[0.55rem] leading-relaxed text-fg-faint">
                 Obligatorio para publicar: es lo que leen los lectores de pantalla y lo
@@ -551,7 +551,7 @@ export function ArticleForm({
             </label>
           </div>
 
-          <label className="grid gap-2">
+          <label className="flex flex-col gap-2 w-full min-w-0">
             <span className="flex items-center justify-between gap-3 font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
               Firma de la nota (opcional)
               <span>
@@ -565,7 +565,7 @@ export function ArticleForm({
               onChange={(event) => setByline(event.target.value)}
               maxLength={BYLINE_MAX}
               placeholder="Ej. Redacción o Nombre y apellido del autor"
-              className="min-h-12 w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
+              className="min-h-12 w-full min-w-0 max-w-full rounded-xl border border-line bg-midnight px-4 text-base text-fg outline-none focus:border-sand sm:text-sm"
             />
             <span className="font-mono text-[0.55rem] leading-relaxed text-fg-faint">
               Si lo dejás vacío, la noticia se publicará sin firma.
