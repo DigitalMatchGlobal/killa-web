@@ -1,19 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Fragment } from "react";
-import { Archive, ArrowLeft, ArrowRight, Edit3, Eye, FileText, Plus, Search, Star } from "lucide-react";
+import { Archive, ArrowLeft, ArrowRight, Edit3, Eye, FileText, Plus, Star, User, X } from "lucide-react";
 
 import { PanelHeader } from "@/components/panel/panel-header";
+import { PanelFilterBar } from "@/components/panel/panel-filter-bar";
 import { requireEditorialStaff } from "@/lib/editorial/auth";
 import { formatPanelDate, STATUS_LABELS } from "@/lib/editorial/format";
-import { getPanelCounts, listPanelArticles, PANEL_PAGE_SIZE } from "@/lib/editorial/panel";
+import { getEditorialProfiles, getPanelCounts, listPanelArticles, PANEL_PAGE_SIZE } from "@/lib/editorial/panel";
 import { isArticleStatus, type ArticleStatus } from "@/lib/editorial/types";
 import { getCategories } from "@/lib/editorial/queries";
 import { hasStalePriority, priorityGroupOf } from "@/lib/editorial/ranking";
 
 /**
- * Tablero del panel: contadores, filtro por estado y el listado paginado de
- * todas las publicaciones (borradores y archivadas incluidas).
+ * Tablero del panel: contadores, filtro por estado, categoría, autor
+ * y el listado paginado de todas las publicaciones (borradores y archivadas incluidas).
  *
  * `dynamic = "force-dynamic"` porque acá se ve contenido no publicado: no
  * queremos que quede cacheado en ningún borde.
@@ -30,7 +31,7 @@ const FILTERS: { value: ArticleStatus | "all"; label: string }[] = [
 export default async function EditorialPanelPage({
   searchParams,
 }: {
-  searchParams: Promise<{ estado?: string; categoria?: string; q?: string; pagina?: string }>;
+  searchParams: Promise<{ estado?: string; categoria?: string; q?: string; autor?: string; pagina?: string }>;
 }) {
   const profile = await requireEditorialStaff();
   const query = await searchParams;
@@ -41,21 +42,43 @@ export default async function EditorialPanelPage({
   const categoryId = query.categoria?.trim() || null;
   const search = query.q?.trim().slice(0, 80) || null;
 
-  const [counts, result, categories] = await Promise.all([
-    getPanelCounts(),
-    listPanelArticles({ status, categoryId, search, page, pageSize: PANEL_PAGE_SIZE }),
+  const authorParam = query.autor?.trim() || null;
+  const resolvedAuthorId = authorParam === "yo" ? profile.id : authorParam;
+
+  const [counts, result, categories, staffProfiles] = await Promise.all([
+    getPanelCounts({ authorId: resolvedAuthorId }),
+    listPanelArticles({ status, categoryId, authorId: resolvedAuthorId, search, page, pageSize: PANEL_PAGE_SIZE }),
     getCategories(),
+    getEditorialProfiles(),
   ]);
+
+  const activeAuthorName =
+    authorParam === "yo" || authorParam === profile.id
+      ? `Mis noticias (${profile.displayName})`
+      : staffProfiles.find((p) => p.id === authorParam)?.displayName || "Autor seleccionado";
 
   const filterHref = (value: ArticleStatus | "all", targetPage?: number) => {
     const params = new URLSearchParams();
     if (value !== "all") params.set("estado", value);
     if (categoryId) params.set("categoria", categoryId);
+    if (authorParam) params.set("autor", authorParam);
     if (search) params.set("q", search);
     if (targetPage && targetPage > 1) params.set("pagina", String(targetPage));
     const suffix = params.toString();
     return suffix ? `/tv/panel?${suffix}` : "/tv/panel";
   };
+
+  const authorFilterHref = (targetAuthor: string | null) => {
+    const params = new URLSearchParams();
+    if (status !== "all") params.set("estado", status);
+    if (categoryId) params.set("categoria", categoryId);
+    if (targetAuthor) params.set("autor", targetAuthor);
+    if (search) params.set("q", search);
+    const suffix = params.toString();
+    return suffix ? `/tv/panel?${suffix}` : "/tv/panel";
+  };
+
+  const isFilteringMyNews = authorParam === "yo" || authorParam === profile.id;
 
   return (
     <>
@@ -76,6 +99,7 @@ export default async function EditorialPanelPage({
           </Link>
         </div>
 
+        {/* Contadores */}
         <section className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[
             { icon: FileText, value: counts.published, label: "Publicadas" },
@@ -87,61 +111,94 @@ export default async function EditorialPanelPage({
               <Icon size={17} className="text-sand" aria-hidden />
               <p className="mt-4 font-display text-2xl font-semibold">{value}</p>
               <p className="mt-0.5 font-mono text-[0.58rem] uppercase tracking-[0.12em] text-fg-faint">
-                {label}
+                {label} {authorParam ? "(filtradas)" : ""}
               </p>
             </article>
           ))}
         </section>
 
-        <nav
-          className="mt-6 flex flex-wrap gap-2 font-mono text-[0.6rem] uppercase tracking-[0.1em]"
-          aria-label="Filtrar por estado"
-        >
-          {FILTERS.map((filter) => (
+        {/* Barra superior de pestañas: Estado + Acceso rápido 'Mis noticias' */}
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+          <nav
+            className="flex flex-wrap gap-2 font-mono text-[0.6rem] uppercase tracking-[0.1em]"
+            aria-label="Filtrar por estado"
+          >
+            {FILTERS.map((filter) => (
+              <Link
+                key={filter.value}
+                href={filterHref(filter.value)}
+                aria-current={status === filter.value ? "page" : undefined}
+                className={
+                  "rounded-full border px-3.5 py-2 transition-colors " +
+                  (status === filter.value
+                    ? "border-sand/60 bg-sand/10 text-sand"
+                    : "border-line text-fg-muted hover:border-sand/40 hover:text-fg")
+                }
+              >
+                {filter.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Acceso directo a Mis noticias para cualquier redactor/admin */}
+          <div className="flex items-center gap-1.5 font-mono text-[0.62rem] uppercase tracking-[0.1em]">
             <Link
-              key={filter.value}
-              href={filterHref(filter.value)}
-              aria-current={status === filter.value ? "page" : undefined}
+              href={authorFilterHref(null)}
               className={
-                "rounded-full border px-3.5 py-2 transition-colors " +
-                (status === filter.value
-                  ? "border-sand/60 bg-sand/10 text-sand"
+                "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 transition-colors " +
+                (!authorParam
+                  ? "border-line bg-fg/10 text-fg font-medium"
                   : "border-line text-fg-muted hover:border-sand/40 hover:text-fg")
               }
             >
-              {filter.label}
+              Todas
             </Link>
-          ))}
-        </nav>
-
-        <form method="get" className="mt-4 grid gap-2 rounded-2xl border border-line bg-surface/35 p-3 sm:grid-cols-[minmax(0,1fr)_15rem_auto]">
-          {status !== "all" ? <input type="hidden" name="estado" value={status} /> : null}
-          <label className="relative">
-            <span className="sr-only">Buscar por título</span>
-            <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-fg-faint" aria-hidden />
-            <input
-              type="search"
-              name="q"
-              defaultValue={search ?? ""}
-              placeholder="Buscar por título"
-              className="min-h-11 w-full rounded-xl border border-line bg-midnight pl-10 pr-4 text-base text-fg outline-none placeholder:text-fg-faint focus:border-cyan"
-            />
-          </label>
-          <label>
-            <span className="sr-only">Filtrar por categoría</span>
-            <select
-              name="categoria"
-              defaultValue={categoryId ?? ""}
-              className="min-h-11 w-full rounded-xl border border-line bg-midnight px-3 text-sm text-fg outline-none focus:border-cyan"
+            <Link
+              href={authorFilterHref("yo")}
+              className={
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 transition-colors " +
+                (isFilteringMyNews
+                  ? "border-cyan/60 bg-cyan/15 text-cyan font-medium"
+                  : "border-line text-fg-muted hover:border-cyan/40 hover:text-cyan")
+              }
             >
-              <option value="">Todas las categorías</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>{category.name}</option>
-              ))}
-            </select>
-          </label>
-          <button type="submit" className="btn bg-cyan px-5 text-midnight hover:bg-cyan-bright">Filtrar</button>
-        </form>
+              <User size={12} />
+              Mis noticias
+            </Link>
+          </div>
+        </div>
+
+        {/* Aviso de filtro de autor activo */}
+        {authorParam && (
+          <div className="mt-3 flex items-center justify-between rounded-xl border border-cyan/30 bg-cyan/10 px-4 py-2 text-xs text-cyan">
+            <div className="flex items-center gap-2">
+              <User size={14} />
+              <span>
+                Mostrando notas de: <strong>{activeAuthorName}</strong>
+              </span>
+            </div>
+            <Link
+              href={authorFilterHref(null)}
+              className="inline-flex items-center gap-1 font-mono text-[0.68rem] text-cyan hover:underline"
+            >
+              <X size={12} />
+              Ver todas
+            </Link>
+          </div>
+        )}
+
+        {/* Buscador y selectores de Categoría y Autor con auto-filtro */}
+        <PanelFilterBar
+          categories={categories}
+          staffProfiles={staffProfiles}
+          currentUserId={profile.id}
+          currentUserDisplayName={profile.displayName}
+          isAdmin={profile.role === "admin"}
+          search={search}
+          categoryId={categoryId}
+          authorParam={authorParam}
+          status={status}
+        />
 
         <section className="mt-6 overflow-hidden rounded-2xl border border-line bg-midnight/60">
           <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
@@ -169,87 +226,87 @@ export default async function EditorialPanelPage({
                 const showGroup =
                   status === "published" && (index === 0 || priorityGroupOf(result.items[index - 1]).key !== group.key);
                 return (
-                <Fragment key={article.id}>
-                {showGroup ? (
-                  <div className="flex flex-wrap items-baseline gap-x-3 bg-surface/50 px-4 py-2.5 sm:px-5">
-                    <h3 className="font-mono text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-sand">
-                      {group.label}
-                    </h3>
-                    <span className="text-xs text-fg-faint">{group.hint}</span>
-                  </div>
-                ) : null}
-                <article
-                  className="grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:grid-cols-[84px_minmax(0,1fr)_auto] sm:gap-4 sm:px-5"
-                >
-                  <div className="relative aspect-square overflow-hidden rounded-lg border border-line bg-surface">
-                    {article.featuredImageUrl ? (
-                      <Image
-                        src={article.featuredImageUrl}
-                        alt=""
-                        fill
-                        sizes="84px"
-                        className="object-cover"
-                        unoptimized
-                      />
+                  <Fragment key={article.id}>
+                    {showGroup ? (
+                      <div className="flex flex-wrap items-baseline gap-x-3 bg-surface/50 px-4 py-2.5 sm:px-5">
+                        <h3 className="font-mono text-[0.6rem] font-semibold uppercase tracking-[0.12em] text-sand">
+                          {group.label}
+                        </h3>
+                        <span className="text-xs text-fg-faint">{group.hint}</span>
+                      </div>
                     ) : null}
-                  </div>
+                    <article className="grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 sm:grid-cols-[84px_minmax(0,1fr)_auto] sm:gap-4 sm:px-5">
+                      <div className="relative aspect-square overflow-hidden rounded-lg border border-line bg-surface">
+                        {article.featuredImageUrl ? (
+                          <Image
+                            src={article.featuredImageUrl}
+                            alt=""
+                            fill
+                            sizes="84px"
+                            className="object-cover"
+                            unoptimized
+                          />
+                        ) : null}
+                      </div>
 
-                  <div className="min-w-0">
-                    <p className="flex flex-wrap items-center gap-2 font-mono text-[0.52rem] uppercase tracking-[0.1em]">
-                      <span className="text-sand">{article.category.name}</span>
-                      <span
-                        className={
-                          "rounded-full px-2 py-0.5 " +
-                          (article.status === "published"
-                            ? "bg-emerald-400/12 text-emerald-300"
-                            : article.status === "archived"
-                              ? "bg-fg-faint/10 text-fg-faint"
-                              : "bg-sand/12 text-sand")
-                        }
-                      >
-                        {STATUS_LABELS[article.status]}
-                      </span>
-                      {article.priority !== 3 ? (
-                        <span className="text-fg-faint">
-                          prioridad {article.priority > 3 ? "alta" : "baja"} ({article.priority})
-                        </span>
-                      ) : null}
-                      {hasStalePriority(article) ? (
-                        <span className="text-sand">revisar prioridad</span>
-                      ) : null}
-                      {article.isFeatured ? (
-                        <span className="inline-flex items-center gap-1 text-sand"><Star size={11} fill="currentColor" aria-hidden /> Destacada</span>
-                      ) : null}
-                    </p>
-                    <h3 className="mt-1 line-clamp-2 break-words font-display text-sm font-semibold sm:text-base">
-                      {article.title}
-                    </h3>
-                    <p className="mt-1 font-mono text-[0.52rem] text-fg-faint">
-                      {article.status === "published"
-                        ? `Publicada ${formatPanelDate(article.publishedAt)}`
-                        : `Modificada ${formatPanelDate(article.updatedAt)}`}
-                      {article.authorName ? ` · ${article.authorName}` : ""}
-                    </p>
-                  </div>
+                      <div className="min-w-0">
+                        <p className="flex flex-wrap items-center gap-2 font-mono text-[0.52rem] uppercase tracking-[0.1em]">
+                          <span className="text-sand">{article.category.name}</span>
+                          <span
+                            className={
+                              "rounded-full px-2 py-0.5 " +
+                              (article.status === "published"
+                                ? "bg-emerald-400/12 text-emerald-300"
+                                : article.status === "archived"
+                                  ? "bg-fg-faint/10 text-fg-faint"
+                                  : "bg-sand/12 text-sand")
+                            }
+                          >
+                            {STATUS_LABELS[article.status]}
+                          </span>
+                          {article.priority !== 3 ? (
+                            <span className="text-fg-faint">
+                              prioridad {article.priority > 3 ? "alta" : "baja"} ({article.priority})
+                            </span>
+                          ) : null}
+                          {hasStalePriority(article) ? (
+                            <span className="text-sand">revisar prioridad</span>
+                          ) : null}
+                          {article.isFeatured ? (
+                            <span className="inline-flex items-center gap-1 text-sand">
+                              <Star size={11} fill="currentColor" aria-hidden /> Destacada
+                            </span>
+                          ) : null}
+                        </p>
+                        <h3 className="mt-1 line-clamp-2 break-words font-display text-sm font-semibold sm:text-base">
+                          {article.title}
+                        </h3>
+                        <p className="mt-1 font-mono text-[0.52rem] text-fg-faint">
+                          {article.status === "published"
+                            ? `Publicada ${formatPanelDate(article.publishedAt)}`
+                            : `Modificada ${formatPanelDate(article.updatedAt)}`}
+                          {article.authorName ? ` · ${article.authorName}` : ""}
+                        </p>
+                      </div>
 
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href={`/tv/panel/notas/${article.id}/vista-previa`}
-                      aria-label={`Previsualizar ${article.title}`}
-                      className="grid size-9 place-items-center rounded-full border border-line text-fg-muted hover:border-sand/60 hover:text-fg"
-                    >
-                      <Eye size={15} aria-hidden />
-                    </Link>
-                    <Link
-                      href={`/tv/panel/notas/${article.id}`}
-                      aria-label={`Editar ${article.title}`}
-                      className="grid size-9 place-items-center rounded-full border border-line text-fg-muted hover:border-sand/60 hover:text-fg"
-                    >
-                      <Edit3 size={15} aria-hidden />
-                    </Link>
-                  </div>
-                </article>
-                </Fragment>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/tv/panel/notas/${article.id}/vista-previa`}
+                          aria-label={`Previsualizar ${article.title}`}
+                          className="grid size-9 place-items-center rounded-full border border-line text-fg-muted hover:border-sand/60 hover:text-fg"
+                        >
+                          <Eye size={15} aria-hidden />
+                        </Link>
+                        <Link
+                          href={`/tv/panel/notas/${article.id}`}
+                          aria-label={`Editar ${article.title}`}
+                          className="grid size-9 place-items-center rounded-full border border-line text-fg-muted hover:border-sand/60 hover:text-fg"
+                        >
+                          <Edit3 size={15} aria-hidden />
+                        </Link>
+                      </div>
+                    </article>
+                  </Fragment>
                 );
               })}
             </div>
@@ -262,10 +319,7 @@ export default async function EditorialPanelPage({
             aria-label="Paginación"
           >
             {result.page > 1 ? (
-              <Link
-                href={filterHref(status, result.page - 1)}
-                className="btn btn-ghost"
-              >
+              <Link href={filterHref(status, result.page - 1)} className="btn btn-ghost">
                 <ArrowLeft size={15} aria-hidden />
                 Anteriores
               </Link>
@@ -276,10 +330,7 @@ export default async function EditorialPanelPage({
               Página {result.page} de {result.pageCount}
             </span>
             {result.page < result.pageCount ? (
-              <Link
-                href={filterHref(status, result.page + 1)}
-                className="btn btn-ghost"
-              >
+              <Link href={filterHref(status, result.page + 1)} className="btn btn-ghost">
                 Siguientes
                 <ArrowRight size={15} aria-hidden />
               </Link>

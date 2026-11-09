@@ -39,6 +39,7 @@ export const PANEL_PAGE_SIZE = 20;
 export type PanelListOptions = {
   status?: ArticleStatus | "all";
   categoryId?: string | null;
+  authorId?: string | null;
   search?: string | null;
   page?: number;
   pageSize?: number;
@@ -65,6 +66,9 @@ export async function listPanelArticles(
   }
   if (options.categoryId) {
     query = query.eq("category_id", options.categoryId);
+  }
+  if (options.authorId) {
+    query = query.eq("author_id", options.authorId);
   }
   if (options.search) {
     // `%` y `,` rompen la sintaxis del filtro `or` de PostgREST: se escapan.
@@ -107,12 +111,18 @@ export async function getPanelArticleById(id: string): Promise<PanelArticle | nu
   return data ? mapPanelArticle(data, supabaseUrl()) : null;
 }
 
-/** Contadores del tablero. */
-export async function getPanelCounts(): Promise<Record<ArticleStatus | "total", number>> {
+/** Contadores del tablero (opcionalmente filtrados por autor). */
+export async function getPanelCounts(options?: {
+  authorId?: string | null;
+}): Promise<Record<ArticleStatus | "total", number>> {
   await requireEditorialStaff();
   const supabase = await createSupabaseServerClient();
 
-  const { data, error } = await supabase.from("articles").select("status");
+  let query = supabase.from("articles").select("status");
+  if (options?.authorId) {
+    query = query.eq("author_id", options.authorId);
+  }
+  const { data, error } = await query;
   if (error) throw new Error(`No se pudieron contar las notas: ${error.message}`);
 
   const counts: Record<ArticleStatus | "total", number> = {
@@ -129,4 +139,22 @@ export async function getPanelCounts(): Promise<Record<ArticleStatus | "total", 
   }
 
   return counts;
+}
+
+/** Obtiene la lista de perfiles editoriales para los selectores de filtro. */
+export async function getEditorialProfiles(): Promise<{ id: string; displayName: string; role: string }[]> {
+  await requireEditorialStaff();
+  const supabase = await createSupabaseServerClient();
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, display_name, role")
+    .order("display_name", { ascending: true });
+
+  if (error || !data) return [];
+  return data.map((p) => ({
+    id: p.id,
+    displayName: p.display_name,
+    role: p.role,
+  }));
 }

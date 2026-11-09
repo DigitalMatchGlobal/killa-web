@@ -32,6 +32,16 @@ export function supabaseAnonKey(): string {
   );
 }
 
+/**
+ * Clave de servicio para operaciones administrativas exclusivas del servidor
+ * (creación de redactores en Auth, auditoría de usuarios).
+ *
+ * ⚠️ NUNCA exponer al cliente ni prefijar con NEXT_PUBLIC_.
+ */
+export function supabaseServiceRoleKey(): string {
+  return required("SUPABASE_SERVICE_ROLE_KEY", process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 /** ¿Hay backend configurado? Permite caer al fallback estático en desarrollo. */
 export function hasSupabaseConfig(): boolean {
   return Boolean(
