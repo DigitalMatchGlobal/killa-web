@@ -4,6 +4,7 @@ import { ArrowLeft, CheckCircle2, ExternalLink } from "lucide-react";
 
 import { ArticleForm } from "@/components/panel/article-form";
 import { PanelHeader } from "@/components/panel/panel-header";
+import { ScrollToTopOnMount } from "@/components/panel/scroll-to-top";
 import { StatusActions } from "@/components/panel/status-actions";
 import { requireEditorialStaff } from "@/lib/editorial/auth";
 import { formatPanelDate } from "@/lib/editorial/format";
@@ -36,7 +37,9 @@ export default async function EditArticlePage({
     <>
       <PanelHeader profile={profile} />
 
-      <main className="shell py-6 sm:py-9">
+      <main id="panel-nota-top" className="shell py-6 sm:py-9 scroll-mt-20">
+        <ScrollToTopOnMount force={isNewlyCreated} />
+
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/tv/panel"

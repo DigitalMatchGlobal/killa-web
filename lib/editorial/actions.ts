@@ -154,7 +154,7 @@ export async function createDraftAction(
   if (error) return fail(`No se pudo crear el borrador: ${error.message}`);
 
   revalidatePath(PANEL_PATH);
-  redirect(`${PANEL_PATH}/notas/${data.id}?creada=1`);
+  redirect(`${PANEL_PATH}/notas/${data.id}?creada=1#panel-nota-top`);
 }
 
 /** Guarda cambios de un borrador o de una nota ya publicada. */

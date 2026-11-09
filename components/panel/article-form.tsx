@@ -155,6 +155,9 @@ export function ArticleForm({
       return;
     }
     setValidationError(null);
+    if (!isEditing && typeof window !== "undefined") {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
   }
 
   function insertMarkdown(before: string, after: string, sample: string) {
