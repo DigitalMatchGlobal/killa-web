@@ -72,6 +72,7 @@ export type EditorialProfile = {
   email: string;
   displayName: string;
   role: EditorialRole;
+  mustChangePassword?: boolean;
 };
 
 /** Una página de resultados. La paginación existe desde el backend aunque la

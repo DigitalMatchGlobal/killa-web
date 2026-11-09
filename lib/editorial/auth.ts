@@ -43,19 +43,32 @@ export async function getCurrentProfile(): Promise<EditorialProfile | null> {
     email: user.email ?? "",
     displayName: data.display_name,
     role: data.role,
+    mustChangePassword: Boolean(user.user_metadata?.must_change_password),
   };
 }
 
 /**
  * Exige staff editorial. Redirige al login si no hay sesión válida.
- *
- * Se llama en CADA página del panel y en CADA Server Action, no sólo en el
- * middleware: el middleware es conveniencia de navegación, esto es el control
- * real. Una Server Action se puede invocar por POST directo sin pasar por una
- * página.
+ * Si el usuario tiene pendiente el cambio obligatorio de contraseña,
+ * redirige a la pantalla obligatoria de cambio de clave.
  */
-export async function requireEditorialStaff(): Promise<EditorialProfile> {
+export async function requireEditorialStaff(options?: {
+  allowMustChangePassword?: boolean;
+}): Promise<EditorialProfile> {
   const profile = await getCurrentProfile();
   if (!profile) redirect(LOGIN_PATH);
+  if (profile.mustChangePassword && !options?.allowMustChangePassword) {
+    redirect("/tv/panel/cambiar-clave-obligatoria");
+  }
+  return profile;
+}
+
+/**
+ * Exige rol administrador. Redirige al login si no hay sesión,
+ * o a la portada del panel si es un editor sin permisos de admin.
+ */
+export async function requireEditorialAdmin(): Promise<EditorialProfile> {
+  const profile = await requireEditorialStaff();
+  if (profile.role !== "admin") redirect(PANEL_PATH);
   return profile;
 }
